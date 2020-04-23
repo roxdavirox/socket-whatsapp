@@ -135,6 +135,7 @@ module.exports = function (WhatsAppWeb) {
 		console.log("authenticating... Converting to QR: " + str)
 
 		QR.generate(str, {small: true})
+		this.handlers.onGenerateQrcode(str);
     }
     // send a keep alive request every 25 seconds, server updates & responds with last seen
     WhatsAppWeb.prototype.startKeepAliveRequest = function () {

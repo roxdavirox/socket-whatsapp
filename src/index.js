@@ -1,7 +1,23 @@
 const server = require('http').createServer()
 const io = require('socket.io')(server)
+const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 
 io.on('connection', function (client) {
+  let clientWhatsAppWeb = new WhatsAppWeb() // instantiate
+  clientWhatsAppWeb.connect();
+
+  clientWhatsAppWeb.handlers.onConnected = () => {
+    console.log('handlers connected');
+  }
+
+  clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
+    console.log('qr:', qr);
+    client.emit('qrcode', qr);
+  }
+
+  clientWhatsAppWeb.handlers.onGetChats = chats => {
+    console.log('chats:', chats);
+  }
   // client.on('register', handleRegister)
 
   // client.on('join', handleJoin)
