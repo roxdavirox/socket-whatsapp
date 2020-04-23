@@ -11,12 +11,13 @@ io.on('connection', function (client) {
   }
 
   clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
-    console.log('qr:', qr);
+    // console.log('qr:', qr);
     client.emit('qrcode', qr);
   }
 
   clientWhatsAppWeb.handlers.onGetChats = chats => {
-    console.log('chats:', chats);
+    // console.log('chats:', chats);
+    client.emit('chats', chats);
   }
   // client.on('register', handleRegister)
 
