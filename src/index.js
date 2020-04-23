@@ -1,5 +1,6 @@
 const server = require('http').createServer()
 const io = require('socket.io')(server)
+io.origins(['https://whatspipe.netlify.app']);
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 
 io.on('connection', function (client) {
