@@ -35,6 +35,10 @@ io.on('connection', function (client) {
       const text = m.message.conversation
       // console.log ("mensagem enviada: JID ", m.key.remoteJid + "  " + text)
       // clientWhatsAppWeb.sendTextMessage(m.key.remoteJid, text);
+      client.emit('message', {
+        jid: m.key.remoteJid,
+        text
+      });
     } else if (messageType === WhatsAppWeb.MessageType.extendedText) { // if it is a quoted thing
       const text =  m.message.extendedTextMessage.text // the actual text
       // clientWhatsAppWeb.sendMessage(m.key.remoteJid, text);
@@ -46,18 +50,18 @@ io.on('connection', function (client) {
     } else { // if it is a media (audio, image, video) message
       // decode, decrypt & save the media. 
       // The extension to the is applied automatically based on the media type
-      clientWhatsAppWeb.decodeMediaMessage(m.message, "media_in_" + m.key.id)
-      .then (meta => {
-        console.log(m.key.remoteJid + " sent media, saved at: " + meta.fileName)
-        const info = {
-          gif: true,  // the video is a gif
-          caption: meta.fileName // the caption
-        }
-        const buffer = fs.readFileSync("./"+ meta.file) // load the gif
-        // clientWhatsAppWeb.sendMediaMessage (m.key.remoteJid, buffer, WhatsAppWeb.MessageType.image, info) // send this gif!
+      // clientWhatsAppWeb.decodeMediaMessage(m.message, "media_in_" + m.key.id)
+      // .then (meta => {
+      //   console.log(m.key.remoteJid + " sent media, saved at: " + meta.fileName)
+      //   const info = {
+      //     gif: true,  // the video is a gif
+      //     caption: meta.fileName // the caption
+      //   }
+      //   const buffer = fs.readFileSync("./"+ meta.file) // load the gif
+      //   // clientWhatsAppWeb.sendMediaMessage (m.key.remoteJid, buffer, WhatsAppWeb.MessageType.image, info) // send this gif!
 
-      })
-      .catch (err => console.log("error in decoding message: " + err))
+      // })
+      // .catch (err => console.log("error in decoding message: " + err))
     }
 
     /* send a message after at least a 1 second timeout after recieving a message, otherwise WhatsApp will reject the message otherwise */
