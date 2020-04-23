@@ -1,6 +1,10 @@
-const server = require('http').createServer()
+const express = require('express');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+const server = require('http').Server(app);
 const io = require('socket.io')(server)
-io.origins(['*']);
+
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 
 io.on('connection', function (client) {
