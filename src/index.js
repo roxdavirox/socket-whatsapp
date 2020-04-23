@@ -33,8 +33,8 @@ io.on('connection', function (client) {
 
     if (messageType === WhatsAppWeb.MessageType.text) { // if it is plain text
       const text = m.message.conversation
-      console.log ("mensagem enviada: JID ", m.key.remoteJid + "  " + text)
-      clientWhatsAppWeb.sendTextMessage(m.key.remoteJid, text);
+      // console.log ("mensagem enviada: JID ", m.key.remoteJid + "  " + text)
+      // clientWhatsAppWeb.sendTextMessage(m.key.remoteJid, text);
     } else if (messageType === WhatsAppWeb.MessageType.extendedText) { // if it is a quoted thing
       const text =  m.message.extendedTextMessage.text // the actual text
       // clientWhatsAppWeb.sendMessage(m.key.remoteJid, text);
