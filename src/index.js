@@ -110,7 +110,7 @@ io.on('connection', function (client) {
   console.log('[socket-wp] connected!')
   client.on('disconnect', function () {
     console.log('client disconnect...', client.id)
-    handleDisconnect()
+    clientWhatsAppWeb.disconnect();
   })
 
   client.on('error', function (err) {
