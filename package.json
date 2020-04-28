@@ -10,6 +10,7 @@
   "author": "Adhiraj Singh",
   "license": "ISC",
   "dependencies": {
+    "concurrently": "^5.2.0",
     "cors": "^2.8.5",
     "curve25519-js": "0.0.4",
     "express": "^4.17.1",

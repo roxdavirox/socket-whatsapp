@@ -127,7 +127,7 @@ module.exports = function(WhatsAppWeb) {
                     // if it is the list of all the people the WhatsApp account has chats with
                     if (json[1].type === "chat") {
                         json[2].forEach (chat => {
-                            console.log('chat', chat)
+                            // console.log('chat', chat)
                             if (chat[0] === "chat" && chat[1].jid) {
                                 const jid = chat[1].jid.replace("@c.us", "@s.whatsapp.net") // format ID
                                 this.chats[ jid ] = {

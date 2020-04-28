@@ -4,11 +4,17 @@ const app = express();
 app.use(cors());
 const server = require('http').Server(app);
 const io = require('socket.io')(server)
-
+const config = require('./config.json');
+const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 
+const db = { ...config.rethinkdb, db: 'whats' };
+
 io.on('connection', function (client) {
+
+
   let clientWhatsAppWeb = new WhatsAppWeb() // instantiate
+
   clientWhatsAppWeb.connect();
 
   clientWhatsAppWeb.handlers.onConnected = () => {
@@ -21,8 +27,29 @@ io.on('connection', function (client) {
   }
 
   clientWhatsAppWeb.handlers.onGetChats = chats => {
+    // TODO: armazerna os chats no banco de dados
     // console.log('chats:', chats);
-    client.emit('chats', chats);
+    // client.emit('chats', chats);
+    const arrChats = Object.values(chats);
+    r.connect(db)
+    .then(conn => {
+      r.table('chats')
+      .changes()
+      .run(conn)
+      .then(cursor => {
+        cursor.each((err, data) => {
+          // console.log('data:', data);
+          const _chats = data.new_val;
+        })
+      });
+      r.table('chats').insert(arrChats).run(conn);
+      r.table('chats').run(conn, (_, cursor) => {
+        cursor.toArray((e, r) => {
+          console.log('r', r);
+          client.emit('chats', r);
+        })
+      });
+    });
   }
 
   // called when someone's presence is updated
