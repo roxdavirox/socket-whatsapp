@@ -7,18 +7,45 @@ const io = require('socket.io')(server)
 const config = require('./config.json');
 const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
-
+const fs = require('fs');
 const db = { ...config.rethinkdb, db: 'whats' };
+var connection = null;
+
+r.connect(db)
+  .then(conn => { connection = conn });
 
 io.on('connection', function (client) {
-
-
   let clientWhatsAppWeb = new WhatsAppWeb() // instantiate
 
-  clientWhatsAppWeb.connect();
+  let isConnected = false;
+  try {
+    const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
+    const authInfo = JSON.parse(file);
+    clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
+    
+  } catch {
+    // if no auth info exists, start a new session
+    clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
+  }
+  r.table('chats')
+  .changes()
+  .run(connection)
+  .then(cursor => {
+    cursor.each((err, data) => {
+      // console.log('data:', data);
+      const _chat = data.new_val;
+      client.emit('chat', _chat);
+    })
+  });
 
   clientWhatsAppWeb.handlers.onConnected = () => {
     console.log('[socket] handlers connected');
+    const authInfo = clientWhatsAppWeb.base64EncodedAuthInfo() // get all the auth info we need to restore this session
+    fs.writeFileSync("auth_info.json", JSON.stringify(authInfo, null, "\t")) // save this info to a file
+    /* 
+      Note: one can take this file and login again from any computer without having to scan the QR code, and get full access to one's WhatsApp 
+      Despite the convenience, be careful with this file
+    */
   }
 
   clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
@@ -30,26 +57,21 @@ io.on('connection', function (client) {
     // TODO: armazerna os chats no banco de dados
     // console.log('chats:', chats);
     // client.emit('chats', chats);
-    const arrChats = Object.values(chats);
-    r.connect(db)
-    .then(conn => {
-      r.table('chats')
-      .changes()
-      .run(conn)
-      .then(cursor => {
-        cursor.each((err, data) => {
-          // console.log('data:', data);
-          const _chats = data.new_val;
-        })
-      });
-      r.table('chats').insert(arrChats).run(conn);
-      r.table('chats').run(conn, (_, cursor) => {
-        cursor.toArray((e, r) => {
-          console.log('r', r);
-          client.emit('chats', r);
-        })
-      });
-    });
+   
+
+    if (!isConnected) {
+      // se for a primeira vez ele adiciona os chats
+      isConnected = true;
+      const arrChats = Object.values(chats);
+
+      r.table('chats').insert(arrChats).run(connection);
+    }
+    // r.table('chats').run(connection, (_, cursor) => {
+    //   cursor.toArray((e, r) => {
+    //     console.log('r', r);
+    //     client.emit('chats', r);
+    //   })
+    // });
   }
 
   // called when someone's presence is updated
@@ -137,7 +159,7 @@ io.on('connection', function (client) {
   console.log('[socket-wp] connected!')
   client.on('disconnect', function () {
     console.log('client disconnect...', client.id)
-    clientWhatsAppWeb.disconnect();
+    client.disconnect();
   })
 
   client.on('error', function (err) {
