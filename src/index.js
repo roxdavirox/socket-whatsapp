@@ -123,5 +123,5 @@ const port = process.env.PORT || 3001
 
 server.listen(port, function (err) {
   if (err) throw err
-  console.log('whatsapp socket listening on port 3001')
+  console.log('whatsapp socket listening on port ', port)
 })
