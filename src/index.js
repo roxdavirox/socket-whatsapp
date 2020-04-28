@@ -12,7 +12,7 @@ io.on('connection', function (client) {
   clientWhatsAppWeb.connect();
 
   clientWhatsAppWeb.handlers.onConnected = () => {
-    console.log('handlers connected');
+    console.log('[socket] handlers connected');
   }
 
   clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
