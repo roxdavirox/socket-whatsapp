@@ -114,7 +114,7 @@ io.on('connection', function (client) {
   })
 
   client.on('error', function (err) {
-    console.log('received error from client:', client.id)
+    console.log('[socket-wp] received error from client:', client.id)
     console.log(err)
   })
 })
@@ -123,5 +123,5 @@ const port = process.env.PORT || 3001
 
 server.listen(port, function (err) {
   if (err) throw err
-  console.log('whatsapp socket listening on port ', port)
+  console.log('[node-server] whatsapp socket listening on port ', port)
 })

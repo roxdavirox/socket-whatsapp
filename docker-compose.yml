@@ -9,11 +9,11 @@ services:
   server:
     build: .
     volumes:
-      - ./src/app:/usr/src/app
+      - ./:/usr/app
       - /usr/app/node_modules
 
     # working_dir: /usr/src/app
-    command: npm start
+    # command: npm start
     ports:
       - "3001:3001"
     depends_on:

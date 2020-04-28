@@ -4,7 +4,7 @@
   "description": "Whatsapp Web API",
   "main": "WhatsAppWeb.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "nodemon src/index.js",
     "test": "node test.js"
   },
   "author": "Adhiraj Singh",
@@ -22,5 +22,8 @@
     "socket.io": "^2.3.0",
     "video-thumb": "0.0.3",
     "ws": "^7.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
   }
 }
