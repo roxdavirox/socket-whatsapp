@@ -18,7 +18,7 @@ r.connect(db)
   .then(conn => { connection = conn });
 
 io.on('connection', function (client) {
-  let clientWhatsAppWeb = new WhatsAppWeb() // instantiate
+  let clientWhatsAppWeb = new WhatsAppWeb(); // instantiate
   console.log('[socket-wp] connected!');
   client.on('disconnect', function () {
     console.log('client disconnect...', client.id)
@@ -54,7 +54,10 @@ io.on('connection', function (client) {
       const { text, jid } = message;
       console.log('jid', jid);
       if (!global.client) return;
-      global.client.sendTextMessage(jid, text);
+      const messageSent = global.client.sendTextMessage(jid, text);
+      console.log('mensagem enviada: ', messageSent);
+      r.table('messages').insert(messageSent).run(connection);
+
     });
   } else {
     try {
@@ -81,11 +84,6 @@ io.on('connection', function (client) {
 
     isConnected = true;
 
-    clientWhatsAppWeb.onNewMessage = message => {
-      console.log('newMessage', message);
-      r.table('messages').insert(message).run(connection);
-    }
-
     clientWhatsAppWeb.handlers.onGetChats = chats => {
       // TODO: armazerna os chats no banco de dados
       // console.log('chats:', chats);
@@ -110,11 +108,15 @@ io.on('connection', function (client) {
       */
     }
 
+    clientWhatsAppWeb.onNewMessage = message => {
+      console.log('nova mensagen do whatsapp:', message);
+      r.table('messages').insert(message).run(connection);
+    }
+
     clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
       // console.log('qr:', qr);
       client.emit('qrcode', qr);
     }
-
     // called when someone's presence is updated
     clientWhatsAppWeb.handlers.presenceUpdated = (id, type) => {
       console.log("presence of " + id + " is " + type)
