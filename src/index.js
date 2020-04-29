@@ -84,24 +84,21 @@ io.on('connection', function (client) {
 
     isConnected = true;
 
-    clientWhatsAppWeb.handlers.onGetChats = chats => {
+    clientWhatsAppWeb.handlers.onGetChats = async chats => {
       // TODO: armazerna os chats no banco de dados
       // client.emit('chats', chats);
       
       const arrChats = Object.values(chats);
       const jid =  arrChats[5].user.jid;
       // mapeia os chats com imagens
-      const chatsWithImages = arrChats.map(c => {
-        var _img = null;
+      const chatsWithImages = await Promise.all(arrChats.map(async c => {
         if(!c.user.jid.includes('.net')) return c;
-        console.log('c', c);
-        const queryImage = global.client.query(['query', 'ProfilePicThumb', jid]);
-        queryImage.then(({ eurl }) => { _img = eurl; console.log('eurl', eurl) });
+        const result = await global.client.query(['query', 'ProfilePicThumb', jid]);
         return {
           ...c,
-          eurl: _img
+          eurl: result.eurl
         }
-      })
+      }))
       r.table('chats').insert(chatsWithImages).run(connection);
     }
 
