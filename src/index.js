@@ -36,6 +36,15 @@ io.on('connection', function (client) {
         client.emit('chats', chats);
       })
     });
+    r.table('messages')
+    .changes()
+    .run(connection)
+    .then(cursor => {
+      cursor.each((e, data) => {
+        const msg = data.new_val;
+        client.emit('message', msg);
+      });
+  });
   } else {
     try {
       const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
@@ -57,16 +66,7 @@ io.on('connection', function (client) {
           client.emit('chat', _chat);
         });
     });
-    r.table('messages')
-      .changes()
-      .run(connection)
-      .then(cursor => {
-        cursor.each((e, data) => {
-          console.log('rethink new msg:', data);
-          const msg = data.new_val;
-          client.emit('message', msg);
-        });
-    });
+
     isConnected = true;
 
     clientWhatsAppWeb.onNewMessage = message => {
