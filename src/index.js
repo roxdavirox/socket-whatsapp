@@ -11,13 +11,15 @@ const fs = require('fs');
 const db = { ...config.rethinkdb, db: 'whats' };
 var connection = null;
 var isConnected = false;
+global.hasWhatsappSocket = false;
+global.client = null;
 
 r.connect(db)
   .then(conn => { connection = conn });
 
 io.on('connection', function (client) {
   let clientWhatsAppWeb = new WhatsAppWeb() // instantiate
-  console.log('[socket-wp] connected!')
+  console.log('[socket-wp] connected!');
   client.on('disconnect', function () {
     console.log('client disconnect...', client.id)
     client.disconnect();
@@ -29,6 +31,7 @@ io.on('connection', function (client) {
   });
 
   if (isConnected) {
+    console.log('isConnected', isConnected);
     // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
     r.table('chats').run(connection, (_, cursor) => {
       cursor.toArray((e, chats) => {
@@ -44,11 +47,20 @@ io.on('connection', function (client) {
         const msg = data.new_val;
         client.emit('message', msg);
       });
-  });
+    });
+    client.on('message', (message) => {
+      // envia mensagem do front para o whatsapp
+      console.log('message', message);
+      const { text, jid } = message;
+      console.log('jid', jid);
+      if (!global.client) return;
+      global.client.sendTextMessage(jid, text);
+    });
   } else {
     try {
       const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
       const authInfo = JSON.parse(file);
+      console.log('authInfo', authInfo);
       clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
       
     } catch {
@@ -84,6 +96,11 @@ io.on('connection', function (client) {
     }
 
     clientWhatsAppWeb.handlers.onConnected = () => {
+      if (!global.hasWhatsappSocket) {
+        global.client = clientWhatsAppWeb;
+        global.hasWhatsappSocket = true;
+      }
+      
       console.log('[socket] handlers connected');
       const authInfo = clientWhatsAppWeb.base64EncodedAuthInfo() // get all the auth info we need to restore this session
       fs.writeFileSync("auth_info.json", JSON.stringify(authInfo, null, "\t")) // save this info to a file
@@ -161,16 +178,11 @@ io.on('connection', function (client) {
     }
 
     // called if an error occurs
-    clientWhatsAppWeb.handlers.onError = (err) => console.log(err)
+    clientWhatsAppWeb.handlers.onError = (err) => {
+      console.log(err);
+      clients['socket-token'] = null;
+    }
     clientWhatsAppWeb.handlers.onDisconnect = () => { /* internet got disconnected, save chats here or whatever; will reconnect automatically */ }
-
-    client.on('message', (message) => {
-      // envia mensagem do front para o whatsapp
-      console.log('message', message);
-      const { text, jid } = message;
-      console.log('jid', jid);
-      clientWhatsAppWeb.sendTextMessage(jid, text);
-    })
   }
 })
 
