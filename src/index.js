@@ -31,9 +31,9 @@ io.on('connection', function (client) {
   if (isConnected) {
     // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
     r.table('chats').run(connection, (_, cursor) => {
-      cursor.toArray((e, r) => {
-        console.log('r', r);
-        client.emit('chats', r);
+      cursor.toArray((e, chats) => {
+        // console.log('chats', chats);
+        client.emit('chats', chats);
       })
     });
   } else {
@@ -46,6 +46,7 @@ io.on('connection', function (client) {
       // if no auth info exists, start a new session
       clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
     }
+    // db listeners
     r.table('chats')
       .changes()
       .run(connection)
@@ -54,9 +55,24 @@ io.on('connection', function (client) {
           // console.log('data:', data);
           const _chat = data.new_val;
           client.emit('chat', _chat);
-        })
+        });
+    });
+    r.table('messages')
+      .changes()
+      .run(connection)
+      .then(cursor => {
+        cursor.each((e, data) => {
+          console.log('rethink new msg:', data);
+          const msg = data.new_val;
+          client.emit('message', msg);
+        });
     });
     isConnected = true;
+
+    clientWhatsAppWeb.onNewMessage = message => {
+      console.log('newMessage', message);
+      r.table('messages').insert(message).run(connection);
+    }
 
     clientWhatsAppWeb.handlers.onGetChats = chats => {
       // TODO: armazerna os chats no banco de dados
@@ -148,23 +164,14 @@ io.on('connection', function (client) {
     clientWhatsAppWeb.handlers.onError = (err) => console.log(err)
     clientWhatsAppWeb.handlers.onDisconnect = () => { /* internet got disconnected, save chats here or whatever; will reconnect automatically */ }
 
-    // client.on('register', handleRegister)
-
-    // client.on('join', handleJoin)
-
-    // client.on('leave', handleLeave)
-
     client.on('message', (message) => {
+      // envia mensagem do front para o whatsapp
       console.log('message', message);
       const { text, jid } = message;
       console.log('jid', jid);
       clientWhatsAppWeb.sendTextMessage(jid, text);
     })
   }
-
-  // client.on('chatrooms', handleGetChatrooms)
-
-  // client.on('availableUsers', handleGetAvailableUsers)
 })
 
 const port = process.env.PORT || 3001
