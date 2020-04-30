@@ -59,8 +59,10 @@ io.on('connection', function (client) {
       r.table('messages').insert(messageSent).run(connection);
 
     });
-    client.emit('userdata', global.client.getUserMetadata());
-    console.log('data user', global.client.getUserMetadata());
+    if (global.client){
+      client.emit('userdata', global.client.getUserMetadata());
+      console.log('data user', global.client.getUserMetadata());
+    }
 
   } else {
     try {
