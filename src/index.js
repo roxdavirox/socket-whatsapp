@@ -59,6 +59,9 @@ io.on('connection', function (client) {
       r.table('messages').insert(messageSent).run(connection);
 
     });
+    client.emit('userdata', global.client.getUserMetadata());
+    console.log('data user', global.client.getUserMetadata());
+
   } else {
     try {
       const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
