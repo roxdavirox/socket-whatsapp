@@ -200,6 +200,7 @@ module.exports = function(WhatsAppWeb) {
     WhatsAppWeb.prototype.sendJSON = function (json) {
 		const str =  JSON.stringify(json)
 		const tag = Utils.generateMessageTag()
+		console.log('tag', tag);
 		this.send(tag + "," + str)
 		return tag
 	}

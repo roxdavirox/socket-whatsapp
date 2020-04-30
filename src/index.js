@@ -94,11 +94,13 @@ io.on('connection', function (client) {
       const chatsWithImages = await Promise.all(arrChats.map(async c => {
         if(!c.user.jid.includes('.net')) return c;
         const result = await global.client.query(['query', 'ProfilePicThumb', jid]);
+        const { eurl } = result;
         return {
           ...c,
-          eurl: result.eurl
+          eurl
         }
-      }))
+      }));
+      console.log('$$$$$$$$$$$$$$$$$$$$adicionando', chatsWithImages);  
       r.table('chats').insert(chatsWithImages).run(connection);
     }
 
@@ -191,7 +193,6 @@ io.on('connection', function (client) {
     // called if an error occurs
     clientWhatsAppWeb.handlers.onError = (err) => {
       console.log(err);
-      clients['socket-token'] = null;
     }
     clientWhatsAppWeb.handlers.onDisconnect = () => { /* internet got disconnected, save chats here or whatever; will reconnect automatically */ }
   }

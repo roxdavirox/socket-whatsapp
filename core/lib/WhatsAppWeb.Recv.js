@@ -167,6 +167,7 @@ module.exports = function(WhatsAppWeb) {
                         q.callback(json.media_conn)
                     } else {
                         q.callback(json)
+                        console.log('json', json);
                     }
                     delete this.queryCallbacks[messageTag]
                 }

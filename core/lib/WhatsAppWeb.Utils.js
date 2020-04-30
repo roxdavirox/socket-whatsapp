@@ -106,7 +106,12 @@ module.exports = {
     randomBytes: function (length) { return Crypto.randomBytes(length) },
 
     // whatsapp requires a message tag for every message, we just use the timestamp as one
-    generateMessageTag: function () { return new Date().getTime().toString() },
+    generateMessageTag: function () { 
+        // return new Date().getTime().toString()
+        const tag = Math.floor(Math.random() * 899999 + 100000) + '' + Math.floor(Math.random() * 899999 + 100000);
+        console.log('tag gerada:', tag);
+        return tag; 
+    },
     // generate a random 16 byte client ID
     generateClientID: function () { return this.randomBytes(16).toString('base64') },
     // generate a random 10 byte ID to attach to a message
