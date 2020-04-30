@@ -55,6 +55,10 @@ class WhatsAppWeb {
 	gotError (error) {
 		this.handlers.onError(error) // tell the handler, we got an error
 	}
+
+	getUserMetadata() {
+		return this.userMetaData;
+	}
 	// called when established a connection to the WhatsApp servers successfully
 	didConnectSuccessfully () {
 		console.log("connected successfully")
