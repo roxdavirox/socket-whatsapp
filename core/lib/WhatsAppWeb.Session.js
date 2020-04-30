@@ -54,7 +54,7 @@ module.exports = function (WhatsAppWeb) {
 	}
 	// once the QR code is scanned and we can validate our connection,
 	// or we resolved the challenge when logging back in
-    WhatsAppWeb.prototype.validateNewConnection = function (json) {
+    WhatsAppWeb.prototype.validateNewConnection = async function (json) {
         if (json.connected) { // only if we're connected
             if (!json.secret) { // if we didn't get a secret, that is we don't need it
                 return this.didConnectSuccessfully()
@@ -89,14 +89,20 @@ module.exports = function (WhatsAppWeb) {
 					serverToken: json.serverToken,
 					clientID: this.authInfo.clientID
 				}
+
+			
+				this.status = Status.CONNECTED
+
+				this.didConnectSuccessfully()
+				const result = await this.query(['query', 'ProfilePicThumb', json.wid]);
+				const { eurl } = result;
+				console.log('eurl', eurl);
 				this.userMetaData = {
 					id: json.wid, // one's WhatsApp ID [cc][number]@s.whatsapp.net
 					name: json.pushname, // name set on whatsapp
-					phone: json.phone  // information about the phone one has logged in to
+					phone: json.phone,  // information about the phone one has logged in to
+					eurl
 				}
-				this.status = Status.CONNECTED
-
-                this.didConnectSuccessfully()
 			} else { // if the checksums didn't match
                 this.close()
                 this.gotError([5, "HMAC validation failed"])

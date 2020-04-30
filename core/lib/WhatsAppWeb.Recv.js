@@ -67,6 +67,7 @@ module.exports = function(WhatsAppWeb) {
                         whether we're starting a new session or are logging back in.
                         Sometimes, we also recieve it when one opens their phone
                      */
+                    console.log('#VALIDATE NEW CONNECTION');
                     this.validateNewConnection(json[1])
                     return
                 case "Cmd":
