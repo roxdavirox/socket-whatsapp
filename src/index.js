@@ -93,7 +93,7 @@ io.on('connection', function (client) {
       // mapeia os chats com imagens
       const chatsWithImages = await Promise.all(arrChats.map(async c => {
         if(!c.user.jid.includes('.net')) return c;
-        const result = await global.client.query(['query', 'ProfilePicThumb', jid]);
+        const result = await global.client.query(['query', 'ProfilePicThumb', c.user.jid]);
         const { eurl } = result;
         return {
           ...c,
