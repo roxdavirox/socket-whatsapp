@@ -95,7 +95,7 @@ module.exports = function (WhatsAppWeb) {
 
 				this.didConnectSuccessfully()
 				const result = await this.query(['query', 'ProfilePicThumb', json.wid]);
-				const { eurl } = result;
+				const { eurl = {} } = result;
 				console.log('eurl', eurl);
 				this.userMetaData = {
 					id: json.wid, // one's WhatsApp ID [cc][number]@s.whatsapp.net

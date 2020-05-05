@@ -93,19 +93,19 @@ io.on('connection', function (client) {
       // TODO: armazerna os chats no banco de dados
       // client.emit('chats', chats);
       
-      const arrChats = Object.values(chats);
-      const jid =  arrChats[5].user.jid;
-      // mapeia os chats com imagens
-      const chatsWithImages = await Promise.all(arrChats.map(async c => {
-        if(!c.user.jid.includes('.net')) return c;
-        const result = await global.client.query(['query', 'ProfilePicThumb', c.user.jid]);
-        const { eurl } = result;
-        return {
-          ...c,
-          eurl
-        }
-      }));
-      r.table('chats').insert(chatsWithImages).run(connection);
+      // const arrChats = Object.values(chats);
+      // const jid =  arrChats[5].user.jid;
+      // // mapeia os chats com imagens
+      // const chatsWithImages = await Promise.all(arrChats.map(async c => {
+      //   if(!c.user.jid.includes('.net')) return c;
+      //   const result = await global.client.query(['query', 'ProfilePicThumb', c.user.jid]);
+      //   const { eurl } = result;
+      //   return {
+      //     ...c,
+      //     eurl
+      //   }
+      // }));
+      // r.table('chats').insert(chatsWithImages).run(connection);
     }
 
     clientWhatsAppWeb.handlers.onConnected = () => {
@@ -129,11 +129,10 @@ io.on('connection', function (client) {
     }
 
     clientWhatsAppWeb.handlers.onReceiveContacts = async contacts => {
-      const contactsWithPicture = [];
-
       const contactsWithPicture = await Promise.all(
         contacts.map(async contact => {
           const result = await global.client.query(['query', 'ProfilePicThumb', contact.jid]);
+          if (!result.eurl) return contact;
           const { eurl } = result;
           return {
             ...contact,
