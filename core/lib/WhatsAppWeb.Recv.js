@@ -151,7 +151,10 @@ module.exports = function(WhatsAppWeb) {
                           .filter(contact => JSON.stringify(contact).includes('short'))
                           .map(contactArr => {
                             const [contactType, contact] = contactArr;
-                            return contact;
+                            return {
+                              ...contact,
+                              phone: contact.jid.split('@')[0]
+                            };
                           });
                         
                         console.log('contact users', contactUsers);

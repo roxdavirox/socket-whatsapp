@@ -128,8 +128,20 @@ io.on('connection', function (client) {
       r.table('messages').insert(message).run(connection);
     }
 
-    clientWhatsAppWeb.handlers.onReceiveContacts = contacts => {
-      client.emit('contacts', contacts);
+    clientWhatsAppWeb.handlers.onReceiveContacts = async contacts => {
+      const contactsWithPicture = [];
+
+      const contactsWithPicture = await Promise.all(
+        contacts.map(async contact => {
+          const result = await global.client.query(['query', 'ProfilePicThumb', contact.jid]);
+          const { eurl } = result;
+          return {
+            ...contact,
+            eurl
+          }
+      }));
+
+      client.emit('contacts', contactsWithPicture);
     }
 
     clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
