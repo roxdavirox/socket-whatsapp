@@ -109,7 +109,7 @@ module.exports = {
     generateMessageTag: function () { 
         // return new Date().getTime().toString()
         const tag = Math.floor(Math.random() * 899999 + 100000) + '' + Math.floor(Math.random() * 899999 + 100000);
-        console.log('tag gerada:', tag);
+        // console.log('tag gerada:', tag);
         return tag; 
     },
     // generate a random 16 byte client ID

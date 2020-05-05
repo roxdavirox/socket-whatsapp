@@ -10,7 +10,6 @@ module.exports = function(WhatsAppWeb) {
     const Status = WhatsAppWeb.Status
 
     WhatsAppWeb.prototype.onMessageRecieved = function (message) {
-
         if (message[0] === "!") { // when the first character in the message is an '!', the server is updating on the last seen
 			const timestamp = message.slice(1,message.length)
 			this.lastSeen = new Date( parseInt(timestamp) )
@@ -34,7 +33,6 @@ module.exports = function(WhatsAppWeb) {
             let json
             if (data[0] === "[" || data[0] === "{") { // if the first character is a "[", then the data must just be plain JSON array or object
                 json = JSON.parse( data ) // parse the JSON
-                //console.log("JSON: " + data)
             } else if (this.status === Status.connected) { 
                 /* 
                     If the data recieved was not a JSON, then it must be an encrypted message.
@@ -145,6 +143,21 @@ module.exports = function(WhatsAppWeb) {
                         this.handlers.onGetChats(this.chats);
                         // console.log('chats:', this.chats);
                     }
+
+                    // recebe a lista de contatos do aparelho e dos grupos que o número participa
+                    if (json[1].type === "contacts") {
+                        const contacts = json[2];
+                        const contactUsers = contacts
+                          .filter(contact => JSON.stringify(contact).includes('short'))
+                          .map(contactArr => {
+                            const [contactType, contact] = contactArr;
+                            return contact;
+                          });
+                        
+                        console.log('contact users', contactUsers);
+
+                        this.handlers.onReceiveContacts(contactUsers);
+                    }
                     return
                 case "Presence":
                     if (this.handlers.presenceUpdated) {
@@ -168,7 +181,6 @@ module.exports = function(WhatsAppWeb) {
                         q.callback(json.media_conn)
                     } else {
                         q.callback(json)
-                        console.log('json', json);
                     }
                     delete this.queryCallbacks[messageTag]
                 }

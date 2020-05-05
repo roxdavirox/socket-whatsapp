@@ -52,23 +52,23 @@ io.on('connection', function (client) {
       // envia mensagem do front para o whatsapp
       console.log('message', message);
       const { text, jid } = message;
-      console.log('jid', jid);
+      // console.log('jid', jid);
       if (!global.client) return;
       const messageSent = global.client.sendTextMessage(jid, text);
-      console.log('mensagem enviada: ', messageSent);
+      // console.log('mensagem enviada: ', messageSent);
       r.table('messages').insert(messageSent).run(connection);
 
     });
     if (global.client){
       client.emit('userdata', global.client.getUserMetadata());
-      console.log('data user', global.client.getUserMetadata());
+      // console.log('data user', global.client.getUserMetadata());
     }
 
   } else {
     try {
       const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
       const authInfo = JSON.parse(file);
-      console.log('authInfo', authInfo);
+      // console.log('authInfo', authInfo);
       clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
       
     } catch {
@@ -105,7 +105,6 @@ io.on('connection', function (client) {
           eurl
         }
       }));
-      console.log('$$$$$$$$$$$$$$$$$$$$adicionando', chatsWithImages);  
       r.table('chats').insert(chatsWithImages).run(connection);
     }
 
@@ -127,6 +126,10 @@ io.on('connection', function (client) {
     clientWhatsAppWeb.onNewMessage = message => {
       console.log('nova mensagen do whatsapp:', message);
       r.table('messages').insert(message).run(connection);
+    }
+
+    clientWhatsAppWeb.handlers.onReceiveContacts = contacts => {
+      client.emit('contacts', contacts);
     }
 
     clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {
