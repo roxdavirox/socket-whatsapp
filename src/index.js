@@ -89,6 +89,10 @@ io.on('connection', function (client) {
 
     isConnected = true;
 
+    client.on('import-contacts', function(contacts) {
+      r.table('contacts').insert(contacts).run(connection);
+    });
+
     clientWhatsAppWeb.handlers.onGetChats = async chats => {
       // TODO: armazerna os chats no banco de dados
       // client.emit('chats', chats);
