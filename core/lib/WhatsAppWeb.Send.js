@@ -148,6 +148,10 @@ module.exports = function(WhatsAppWeb) {
 	}
 	// generic send message construct
 	WhatsAppWeb.prototype.sendMessage = function (id, message, timestamp=null) {
+		if (!id.includes('@s.whatsapp.net')) {
+			console.log('mensagem inválida - erro ao enviar', id, message);
+			return;
+		}
 		if (!timestamp) { // if no timestamp was provided,
 			timestamp = new Date() // set timestamp to now
 		}

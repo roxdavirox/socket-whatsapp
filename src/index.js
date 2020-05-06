@@ -32,8 +32,7 @@ io.on('connection', function (client) {
 
   r.table('contacts').run(connection).then((cursor) => {
     cursor.toArray((e, contacts) => {
-      const phoneContacts = contacts;
-      client.emit('contacts', phoneContacts)
+      client.emit('contacts', contacts)
     });;
   });
 
@@ -97,7 +96,11 @@ io.on('connection', function (client) {
     isConnected = true;
 
     client.on('import-contacts', function(contacts) {
-      r.table('contacts').insert(contacts).run(connection);
+      const contactsWithValidJid = contacts.map(contact => ({
+        ...contact,
+        jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
+      }))
+      r.table('contacts').insert(contactsWithValidJid).run(connection);
     });
 
     clientWhatsAppWeb.handlers.onGetChats = async chats => {
