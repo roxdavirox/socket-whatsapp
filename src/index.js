@@ -30,6 +30,13 @@ io.on('connection', function (client) {
     console.log(err)
   });
 
+  r.table('contacts').run(connection).then((cursor) => {
+    cursor.toArray((e, contacts) => {
+      const phoneContacts = contacts;
+      client.emit('contacts', phoneContacts)
+    });;
+  });
+
   if (isConnected) {
     console.log('isConnected', isConnected);
     // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
