@@ -37,23 +37,8 @@ io.on('connection', function (client) {
   });
 
   if (isConnected) {
-    console.log('isConnected', isConnected);
     // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
-    r.table('chats').run(connection, (_, cursor) => {
-      cursor.toArray((e, chats) => {
-        // console.log('chats', chats);
-        client.emit('chats', chats);
-      })
-    });
-    r.table('messages')
-    .changes()
-    .run(connection)
-    .then(cursor => {
-      cursor.each((e, data) => {
-        const msg = data.new_val;
-        client.emit('message', msg);
-      });
-    });
+    console.log('isConnected', isConnected);
     client.on('message', (message) => {
       // envia mensagem do front para o whatsapp
       console.log('message', message);
@@ -82,14 +67,15 @@ io.on('connection', function (client) {
       clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
     }
     // db listeners
-    r.table('chats')
+    r.table('messages')
+      .filter(r.row('chatroomId').eq('6dcd2d5d-6492-48a7-8e1c-5138c486c660'))
       .changes()
       .run(connection)
       .then(cursor => {
         cursor.each((err, data) => {
           // console.log('data:', data);
           const _chat = data.new_val;
-          client.emit('chat', _chat);
+          // client.emit('chat', _chat);
         });
     });
 
