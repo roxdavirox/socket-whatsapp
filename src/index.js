@@ -73,7 +73,7 @@ io.on('connection', function (client) {
       }
       // db listeners
       r.table('messages')
-        .filter(r.row('userId').eq('a069df2c-8abe-45a1-9e15-d5d3d62b5044'))
+        .filter(r.row('userId').eq(userData.userId))
         .changes()
         .run(connection)
         .then(cursor => {
