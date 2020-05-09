@@ -157,7 +157,7 @@ module.exports = function(WhatsAppWeb) {
                             };
                           });
                         
-                        console.log('contact users', contactUsers);
+                        // console.log('contact users', contactUsers);
 
                         this.handlers.onReceiveContacts(contactUsers);
                     }
