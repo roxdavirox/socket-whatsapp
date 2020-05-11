@@ -60,6 +60,18 @@ io.on('connection', function (client) {
         // console.log('data user', global.client.getUserMetadata());
       }
 
+      r.table('messages')
+        .filter(r.row('userId').eq(userData.userId))
+        .changes()
+        .run(connection)
+        .then(cursor => {
+          cursor.each((err, data) => {
+            // console.log('data:', data);
+            const message = data.new_val;
+            client.emit('message', message);
+          });
+      });
+
     } else {
       try {
         const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
@@ -71,18 +83,6 @@ io.on('connection', function (client) {
         // if no auth info exists, start a new session
         clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
       }
-      // db listeners
-      r.table('messages')
-        .filter(r.row('userId').eq(userData.userId))
-        .changes()
-        .run(connection)
-        .then(cursor => {
-          cursor.each((err, data) => {
-            // console.log('data:', data);
-            const _chat = data.new_val;
-            // client.emit('chat', _chat);
-          });
-      });
 
       isConnected = true;
 
@@ -130,7 +130,13 @@ io.on('connection', function (client) {
 
       clientWhatsAppWeb.onNewMessage = message => {
         console.log('nova mensagen do whatsapp:', message);
-        r.table('messages').insert(message).run(connection);
+        r.table('messages').insert({
+          ownerId: '8d4693dd-2fe3-41a5-913f-6e43118a70ee',
+          contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
+          userId: 'a069df2c-8abe-45a1-9e15-d5d3d62b5044',
+          chatId: '1d339707-076d-4659-8147-dd6f84876f66',
+          ...message
+        }).run(connection);
       }
 
       clientWhatsAppWeb.handlers.onReceiveContacts = async contacts => {
