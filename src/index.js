@@ -52,7 +52,13 @@ io.on('connection', function (client) {
         if (!global.client) return;
         const messageSent = global.client.sendTextMessage(jid, text);
         // console.log('mensagem enviada: ', messageSent);
-        r.table('messages').insert(messageSent).run(connection);
+        r.table('messages').insert({
+          ownerId: '8d4693dd-2fe3-41a5-913f-6e43118a70ee',
+          contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
+          userId: 'a069df2c-8abe-45a1-9e15-d5d3d62b5044',
+          chatId: '1d339707-076d-4659-8147-dd6f84876f66',
+          ...messageSent
+        }).run(connection);
 
       });
       if (global.client){
@@ -130,6 +136,7 @@ io.on('connection', function (client) {
 
       clientWhatsAppWeb.onNewMessage = message => {
         console.log('nova mensagen do whatsapp:', message);
+        if (message.key.fromMe) return;
         r.table('messages').insert({
           ownerId: '8d4693dd-2fe3-41a5-913f-6e43118a70ee',
           contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
