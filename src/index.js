@@ -57,6 +57,7 @@ io.on('connection', function (client) {
           contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
           userId: 'a069df2c-8abe-45a1-9e15-d5d3d62b5044',
           chatId: '1d339707-076d-4659-8147-dd6f84876f66',
+          time: message.time, 
           ...messageSent
         }).run(connection);
 
