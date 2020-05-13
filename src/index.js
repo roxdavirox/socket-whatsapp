@@ -38,17 +38,16 @@ io.on('connection', function (client) {
       .filter({ userId: userData.id })
       .run(connection).then((cursor) => {
         cursor.toArray((e, contacts) => {
-          client.emit('contacts', contacts)
+          client.emit('contacts', contacts);
+          r.table('chats')
+            .filter(r.row('userId')
+            .eq(userData.id))
+            .run(connection).then(cursor =>{
+              cursor.toArray((err, chats) => {
+                client.emit('chats', chats);
+              });
+            });
         });;
-      });
-
-    r.table('chats')
-      .filter(r.row('userId')
-      .eq(userData.id))
-      .run(connection).then(cursor =>{
-        cursor.toArray((err, chats) => {
-          client.emit('chats', chats);
-        });
       });
 
     if (isConnected) {
