@@ -129,25 +129,32 @@ io.on('connection', function (client) {
       clientWhatsAppWeb.onNewMessage = message => {
         console.log('nova mensagem do whatsapp:', message);
         if (message.key.fromMe || !message.key) return;
-        if(message.key.remoteJid && message.remoteJid.includes('status')) return;
+        if(message.key.remoteJid && message.key.remoteJid.includes('status')) return;
 
         r.table('contacts').filter({ jid: message.key.remoteJid })
           .run(connection).then((cursor) => {
             cursor.toArray((e, contacts) => {
               const [currentContact] = contacts;
               if (!currentContact) return;
-              const newMessage = {
-                ownerId: currentContact.ownerId,
-                contactId: currentContact.id, 
-                userId: currentContact.userId,
-                chatId: '1d339707-076d-4659-8147-dd6f84876f66',
-                ...message
-              };
-              r.table('messages').insert(newMessage).run(connection);
+              r.table('chats').filter({ contactId: currentContact.id })
+                .run(connection)
+                .then(chatCursor => {
+                  chatCursor.toArray((e, chats) => {
+                    const [chat] = chats;
+                    if (!chat) return;
+                    const newMessage = {
+                      ownerId: currentContact.ownerId,
+                      contactId: currentContact.id, 
+                      userId: currentContact.userId,
+                      chatId: chat.id,
+                      // chatId: '1d339707-076d-4659-8147-dd6f84876f66',
+                      ...message
+                    };
+                    r.table('messages').insert(newMessage).run(connection);
+                  });
+                });
             });;
-        });
-       
-       
+        });       
       }
 
       clientWhatsAppWeb.handlers.onReceiveContacts = async contacts => {
