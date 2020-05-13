@@ -128,7 +128,7 @@ io.on('connection', function (client) {
       // contato chat e o dono da conta através da mensagem
       clientWhatsAppWeb.onNewMessage = message => {
         console.log('nova mensagem do whatsapp:', message);
-        if (message.key.fromMe) return;
+        if (message.key.fromMe || !message.key) return;
         if(message.key.remoteJid && message.remoteJid.includes('status')) return;
 
         r.table('contacts').filter({ jid: message.key.remoteJid })
