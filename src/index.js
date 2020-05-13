@@ -34,7 +34,7 @@ io.on('connection', function (client) {
       console.log(err)
     });
 
-    r.table('contacts').filter({ userId: userData.userId })
+    r.table('contacts').filter({ userId: userData.id })
       .run(connection).then((cursor) => {
         cursor.toArray((e, contacts) => {
           client.emit('contacts', contacts)
@@ -43,19 +43,17 @@ io.on('connection', function (client) {
 
     if (isConnected) {
       // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
-      console.log('isConnected', isConnected);
       client.on('message', (message) => {
         // envia mensagem do front para o whatsapp
         console.log('message', message);
-        const { text, jid } = message;
-        // console.log('jid', jid);
+        const { text, jid, contactId } = message;
+        // TODO: buscar chat id de acordo com o id do contato
         if (!global.client) return;
         const messageSent = global.client.sendTextMessage(jid, text);
-        // console.log('mensagem enviada: ', messageSent);
         r.table('messages').insert({
-          ownerId: '8d4693dd-2fe3-41a5-913f-6e43118a70ee',
-          contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
-          userId: 'a069df2c-8abe-45a1-9e15-d5d3d62b5044',
+          ownerId: userData.ownerId,
+          userId: userData.id,
+          contactId, 
           chatId: '1d339707-076d-4659-8147-dd6f84876f66',
           time: message.time, 
           ...messageSent
@@ -68,7 +66,7 @@ io.on('connection', function (client) {
       }
 
       r.table('messages')
-        .filter(r.row('userId').eq(userData.userId))
+        .filter(r.row('userId').eq(userData.id))
         .changes()
         .run(connection)
         .then(cursor => {
@@ -80,16 +78,17 @@ io.on('connection', function (client) {
       });
 
     } else {
-      try {
-        const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
-        const authInfo = JSON.parse(file);
-        // console.log('authInfo', authInfo);
-        clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
+      // primeira conexão com qrcode
+      // try {
+      //   const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
+      //   const authInfo = JSON.parse(file);
+      //   // console.log('authInfo', authInfo);
+      //   clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
         
-      } catch {
-        // if no auth info exists, start a new session
-        clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
-      }
+      // } catch {
+      //   // if no auth info exists, start a new session
+      // }
+      clientWhatsAppWeb.connect(); // start a new session, with QR code scanning and what not
 
       isConnected = true;
 
@@ -100,25 +99,6 @@ io.on('connection', function (client) {
         }))
         r.table('contacts').insert(contactsWithValidJid).run(connection);
       });
-
-      clientWhatsAppWeb.handlers.onGetChats = async chats => {
-        // TODO: armazerna os chats no banco de dados
-        // client.emit('chats', chats);
-        
-        // const arrChats = Object.values(chats);
-        // const jid =  arrChats[5].user.jid;
-        // // mapeia os chats com imagens
-        // const chatsWithImages = await Promise.all(arrChats.map(async c => {
-        //   if(!c.user.jid.includes('.net')) return c;
-        //   const result = await global.client.query(['query', 'ProfilePicThumb', c.user.jid]);
-        //   const { eurl } = result;
-        //   return {
-        //     ...c,
-        //     eurl
-        //   }
-        // }));
-        // r.table('chats').insert(chatsWithImages).run(connection);
-      }
 
       clientWhatsAppWeb.handlers.onConnected = () => {
         if (!global.hasWhatsappSocket) {
@@ -135,16 +115,29 @@ io.on('connection', function (client) {
         */
       }
 
+      // cada client deve enviar os dados do usuario
+      // contato chat e o dono da conta através da mensagem
       clientWhatsAppWeb.onNewMessage = message => {
-        console.log('nova mensagen do whatsapp:', message);
+        console.log('nova mensagem do whatsapp:', message);
         if (message.key.fromMe) return;
-        r.table('messages').insert({
-          ownerId: '8d4693dd-2fe3-41a5-913f-6e43118a70ee',
-          contactId: 'e30a9117-d55c-42d3-b479-ec7d78802bdb', 
-          userId: 'a069df2c-8abe-45a1-9e15-d5d3d62b5044',
-          chatId: '1d339707-076d-4659-8147-dd6f84876f66',
-          ...message
-        }).run(connection);
+        if(message.remoteJid && message.remoteJid.includes('status')) return;
+
+        r.table('contacts').filter({ jid: message.key.remoteJid })
+          .run(connection).then((cursor) => {
+            cursor.toArray((e, contacts) => {
+              const [currentContact] = contacts;
+              const newMessage = {
+                ownerId: currentContact.ownerId,
+                contactId: currentContact.id, 
+                userId: currentContact.userId,
+                chatId: '1d339707-076d-4659-8147-dd6f84876f66',
+                ...message
+              };
+              r.table('messages').insert(newMessage).run(connection);
+            });;
+        });
+       
+       
       }
 
       clientWhatsAppWeb.handlers.onReceiveContacts = async contacts => {
@@ -158,8 +151,7 @@ io.on('connection', function (client) {
               eurl
             }
         }));
-
-        client.emit('contacts', contactsWithPicture);
+        client.emit('adm-contacts', contactsWithPicture);
       }
 
       clientWhatsAppWeb.handlers.onGenerateQrcode = qr => {

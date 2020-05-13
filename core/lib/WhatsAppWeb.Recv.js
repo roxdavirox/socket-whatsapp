@@ -140,7 +140,7 @@ module.exports = function(WhatsAppWeb) {
                                 }
                             }
                         })
-                        this.handlers.onGetChats(this.chats);
+                        // this.handlers.onGetChats(this.chats);
                         // console.log('chats:', this.chats);
                     }
 
