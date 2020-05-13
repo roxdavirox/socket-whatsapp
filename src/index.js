@@ -34,12 +34,22 @@ io.on('connection', function (client) {
       console.log(err)
     });
 
-    r.table('contacts').filter({ userId: userData.id })
+    r.table('contacts')
+      .filter({ userId: userData.id })
       .run(connection).then((cursor) => {
         cursor.toArray((e, contacts) => {
           client.emit('contacts', contacts)
         });;
-    });
+      });
+
+    r.table('chats')
+      .filter(r.row('userId')
+      .eq(userData.id))
+      .run(connection).then(cursor =>{
+        cursor.toArray((err, chats) => {
+          client.emit('chats', chats);
+        });
+      });
 
     if (isConnected) {
       // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
@@ -120,12 +130,13 @@ io.on('connection', function (client) {
       clientWhatsAppWeb.onNewMessage = message => {
         console.log('nova mensagem do whatsapp:', message);
         if (message.key.fromMe) return;
-        if(message.remoteJid && message.remoteJid.includes('status')) return;
+        if(message.key.remoteJid && message.remoteJid.includes('status')) return;
 
         r.table('contacts').filter({ jid: message.key.remoteJid })
           .run(connection).then((cursor) => {
             cursor.toArray((e, contacts) => {
               const [currentContact] = contacts;
+              if (!currentContact) return;
               const newMessage = {
                 ownerId: currentContact.ownerId,
                 contactId: currentContact.id, 
