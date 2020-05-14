@@ -4,6 +4,7 @@ const app = express();
 app.use(cors());
 const server = require('http').Server(app);
 const io = require('socket.io')(server)
+const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
 const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
@@ -18,6 +19,14 @@ global.client = null;
 
 r.connect(db)
   .then(conn => { connection = conn });
+
+io.use(jwtAuth.authenticate({
+  secret: '5C8AE33A9A540E6EF57EEA753147AA2F',    // required, used to verify the token's signature
+  algorithm: 'HS256'        // optional, default to be HS256
+}, function(payload, done) {
+  // done is a callback, you can use it as follows
+  console.log('payload', payload);
+}));
 
 io.on('connection', function (client) {
   client.on('userdata', function(userData) {

@@ -22,6 +22,7 @@
     "rethinkdb": "^2.4.2",
     "sharp": "^0.25.2",
     "socket.io": "^2.3.0",
+    "socketio-jwt-auth": "^0.1.0",
     "video-thumb": "0.0.3",
     "ws": "^7.2.3"
   },
