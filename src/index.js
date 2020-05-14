@@ -8,6 +8,8 @@ const config = require('./config.json');
 const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 const fs = require('fs');
+const ContactsRepository = require('./repositories/ContactsRepository');
+const ChatsRepository = require('./repositories/ChatsRepository');
 const db = { ...config.rethinkdb, db: 'whats' };
 var connection = null;
 var isConnected = false;
@@ -33,23 +35,19 @@ io.on('connection', function (client) {
       console.log('[socket-wp] received error from client:', client.id)
       console.log(err)
     });
-
-    r.table('contacts')
-      .filter({ userId: userData.id })
-      .run(connection).then((cursor) => {
-        cursor.toArray((e, contacts) => {
-          client.emit('contacts', contacts);
-          r.table('chats')
-            .filter(r.row('userId')
-            .eq(userData.id))
-            .run(connection).then(cursor =>{
-              cursor.toArray((err, chats) => {
-                client.emit('chats', chats);
-              });
-            });
-        });;
+    
+    ContactsRepository.getContactsByUserId(userData.id, connection)
+      .then(contacts => {
+        console.log('contacts', contacts);
+        client.emit('contacts', contacts)
       });
-
+    
+    ChatsRepository.getChatsByUserId(userData.id, connection)
+      .then(chats => {
+        console.log('chatas', chats);
+        client.emit('chats', chats)
+      });
+    
     if (isConnected) {
       // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
       client.on('message', (message) => {
@@ -59,15 +57,18 @@ io.on('connection', function (client) {
         // TODO: buscar chat id de acordo com o id do contato
         if (!global.client) return;
         const messageSent = global.client.sendTextMessage(jid, text);
-        r.table('messages').insert({
-          ownerId: userData.ownerId,
-          userId: userData.id,
-          contactId, 
-          chatId: '1d339707-076d-4659-8147-dd6f84876f66',
-          time: message.time, 
-          ...messageSent
-        }).run(connection);
-
+        ChatsRepository.getChatByUserId(userData.id)
+          .then(chat => {
+            console.log('chat', chat);
+            r.table('messages').insert({
+              ownerId: userData.ownerId,
+              userId: userData.id,
+              contactId, 
+              chatId: chat.id,
+              time: message.time, 
+              ...messageSent
+            }).run(connection);
+          });
       });
       if (global.client){
         client.emit('userdata', global.client.getUserMetadata());
@@ -126,7 +127,7 @@ io.on('connection', function (client) {
 
       // cada client deve enviar os dados do usuario
       // contato chat e o dono da conta através da mensagem
-      clientWhatsAppWeb.onNewMessage = message => {
+      clientWhatsAppWeb.onNewMessage = async message => {
         console.log('nova mensagem do whatsapp:', message);
         if (message.key.fromMe || !message.key) return;
         if(message.key.remoteJid && message.key.remoteJid.includes('status')) return;
@@ -147,7 +148,6 @@ io.on('connection', function (client) {
                       contactId: currentContact.id, 
                       userId: currentContact.userId,
                       chatId: chat.id,
-                      // chatId: '1d339707-076d-4659-8147-dd6f84876f66',
                       ...message
                     };
                     r.table('messages').insert(newMessage).run(connection);

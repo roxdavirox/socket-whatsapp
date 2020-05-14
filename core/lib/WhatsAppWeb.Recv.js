@@ -254,6 +254,7 @@ module.exports = function(WhatsAppWeb) {
     
     // get what type of message it is
     WhatsAppWeb.prototype.getMessageType = function (message) {
+        console.log('message type', message);
         return Object.keys(message)[0]
         /*for (var key in WhatsAppWeb.MessageType) {
             if (WhatsAppWeb.MessageType[key] === relvantKey) {
