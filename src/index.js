@@ -53,22 +53,18 @@ io.on('connection', function (client) {
       client.on('message', (message) => {
         // envia mensagem do front para o whatsapp
         console.log('message', message);
-        const { text, jid, contactId } = message;
+        const { text, jid, contactId, chatId } = message;
         // TODO: buscar chat id de acordo com o id do contato
         if (!global.client) return;
         const messageSent = global.client.sendTextMessage(jid, text);
-        ChatsRepository.getChatByUserId(userData.id)
-          .then(chat => {
-            console.log('chat', chat);
-            r.table('messages').insert({
-              ownerId: userData.ownerId,
-              userId: userData.id,
-              contactId, 
-              chatId: chat.id,
-              time: message.time, 
-              ...messageSent
-            }).run(connection);
-          });
+        r.table('messages').insert({
+          ownerId: userData.ownerId,
+          userId: userData.id,
+          contactId, 
+          chatId,
+          time: message.time, 
+          ...messageSent
+        }).run(connection);
       });
       if (global.client){
         client.emit('userdata', global.client.getUserMetadata());
