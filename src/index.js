@@ -144,6 +144,7 @@ io.on('connection', function (client) {
                       contactId: currentContact.id, 
                       userId: currentContact.userId,
                       chatId: chat.id,
+                      time: new Date(),
                       ...message
                     };
                     r.table('messages').insert(newMessage).run(connection);
