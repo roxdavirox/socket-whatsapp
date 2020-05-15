@@ -20,4 +20,4 @@ function ContactsRepository() {
   }
 }
 
-module.exports = new ContactsRepository();
+module.exports = ContactsRepository();

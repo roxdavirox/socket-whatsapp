@@ -34,4 +34,4 @@ function ChatsRepository() {
   }
 }
 
-module.exports = new ChatsRepository();
+module.exports = ChatsRepository();
