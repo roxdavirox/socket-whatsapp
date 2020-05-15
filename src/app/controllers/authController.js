@@ -38,7 +38,7 @@ const createToken = (params = {}) => jwt.sign(params, config.jwt.secret, {
 module.exports = ({ app }) => {
   const authenticateUser = async (req, res) => {
     try {
-      const { email,  } = req.body;
+      const { email, password } = req.body;
       console.log('email', email);
       const user = await userRepository.getUserByEmail(email);
   
@@ -48,13 +48,15 @@ module.exports = ({ app }) => {
           .send({ error: 'User not found' });
         }
   
+      // usar bcrypt
       // if (!await bcrypt.compare(password, user.password)) {
-      //   return res
-      //     .status(400)
-      //     .send({ error: 'Invalid password' });
-      // }
+      if(user.password !== password) {
+        return res
+          .status(400)
+          .send({ error: 'Invalid password '});
+      }
   
-      // user.password = undefined;
+      user.password = undefined;
   
       return res.send({
         user,
