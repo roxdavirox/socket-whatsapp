@@ -20,11 +20,8 @@ global.client = null;
 global.connection = null;
 const dbContext = require('./app/data');
 
-var connection = null;
-
 dbContext.then(conn => { 
   global.connection = conn;
-  console.log('global.connection', global.connection);
   console.log('[rethinkDb] - connected');
 });
 
