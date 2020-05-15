@@ -9,8 +9,8 @@ const config = require('./config.json');
 const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 const fs = require('fs');
-const ContactsRepository = require('./repositories/ContactsRepository');
-const ChatsRepository = require('./repositories/ChatsRepository');
+const ContactsRepository = require('./app/repositories/ContactsRepository');
+const ChatsRepository = require('./app/repositories/ChatsRepository');
 const db = { ...config.rethinkdb, db: 'whats' };
 var connection = null;
 var isConnected = false;
@@ -21,7 +21,7 @@ r.connect(db)
   .then(conn => { connection = conn });
 
 io.use(jwtAuth.authenticate({
-  secret: '5C8AE33A9A540E6EF57EEA753147AA2F',    // required, used to verify the token's signature
+  secret: config.jwt.secret,    // required, used to verify the token's signature
   algorithm: 'HS256'        // optional, default to be HS256
 }, function(payload, done) {
   // done is a callback, you can use it as follows

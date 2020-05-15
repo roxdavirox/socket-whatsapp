@@ -2,5 +2,8 @@
     "rethinkdb": {
         "host": "localhost",
         "port": 28015
+    },
+    "jwt": {
+        "secret": "5C8AE33A9A540E6EF57EEA753147AA2F"
     }
 }
