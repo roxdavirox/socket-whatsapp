@@ -11,8 +11,8 @@ const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 const fs = require('fs');
-const createContactRepository = require('./app/repositories/contactsRepository');
-const createChatRepository = require('./app/repositories/chatsRepository');
+const ContactsRepository = require('./app/repositories/contactsRepository');
+const ChatsRepository = require('./app/repositories/chatsRepository');
 
 var isConnected = false;
 global.hasWhatsappSocket = false;
@@ -31,14 +31,6 @@ dbContext.then(conn => {
 // inject deps
 require('./app/controllers')({
   app,
-  connection: global.connection
-});
-
-const ContactsRepository = createContactRepository({
-  connection: global.connection
-});
-
-const ChatsRepository = createChatRepository({
   connection: global.connection
 });
 

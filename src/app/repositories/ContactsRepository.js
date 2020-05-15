@@ -1,12 +1,12 @@
 const rethinkDb = require('rethinkdb');
 
-function ContactsRepository({ connection }) {
+function ContactsRepository() {
   return {
     getContactsByUserId(userId) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('contacts')
           .filter({ userId })
-          .run(connection)
+          .run(global.connection)
           .then(cursor => {
             cursor.toArray((err, contacts) => {
               if(err) reject(err);
@@ -18,4 +18,4 @@ function ContactsRepository({ connection }) {
   }
 }
 
-module.exports = deps => ContactsRepository(deps);
+module.exports = ContactsRepository();

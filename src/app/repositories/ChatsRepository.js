@@ -1,12 +1,12 @@
 const rethinkDb = require('rethinkdb');
 
-function ChatsRepository({ connection }) {
+function ChatsRepository() {
   return {
     getChatsByUserId(userId) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('chats')
           .filter({ userId })
-          .run(connection)
+          .run(global.connection)
           .then(cursor => {
             cursor.toArray((err, chats) => {
               if(err) reject(err);
@@ -20,7 +20,7 @@ function ChatsRepository({ connection }) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('chats')
           .filter({ userId })
-          .run(connection)
+          .run(global.connection)
           .then(cursor => {
             cursor.toArray((err, chats) => {
               if(err) reject(err);
@@ -34,4 +34,4 @@ function ChatsRepository({ connection }) {
   }
 }
 
-module.exports = deps => ChatsRepository(deps);
+module.exports = ChatsRepository();
