@@ -16,9 +16,9 @@ function UsersRepository() {
           resolve(user);
         };
 
-        const resolveUser = cursor => cursor.next(handleResolveUser);
+        const getFirstUser = cursor => cursor.next(handleResolveUser);
 
-        userResponse.then(resolveUser);
+        userResponse.then(getFirstUser);
       })
     }
   }
