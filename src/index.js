@@ -1,24 +1,46 @@
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const app = express();
 app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 const server = require('http').Server(app);
 const io = require('socket.io')(server)
 const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
-const r = require('rethinkdb');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 const fs = require('fs');
-const ContactsRepository = require('./app/repositories/contactsRepository');
-const ChatsRepository = require('./app/repositories/chatsRepository');
-const db = { ...config.rethinkdb, db: 'whats' };
-var connection = null;
+const createContactRepository = require('./app/repositories/contactsRepository');
+const createChatRepository = require('./app/repositories/chatsRepository');
+
 var isConnected = false;
 global.hasWhatsappSocket = false;
 global.client = null;
+global.connection = null;
+const dbContext = require('./app/data');
 
-r.connect(db)
-  .then(conn => { connection = conn });
+var connection = null;
+
+dbContext.then(conn => { 
+  global.connection = conn;
+  console.log('global.connection', global.connection);
+  console.log('[rethinkDb] - connected');
+});
+
+// inject deps
+require('./app/controllers')({
+  app,
+  connection: global.connection
+});
+
+const ContactsRepository = createContactRepository({
+  connection: global.connection
+});
+
+const ChatsRepository = createChatRepository({
+  connection: global.connection
+});
 
 io.use(jwtAuth.authenticate({
   secret: config.jwt.secret,    // required, used to verify the token's signature
@@ -45,13 +67,13 @@ io.on('connection', function (client) {
       console.log(err)
     });
     
-    ContactsRepository.getContactsByUserId(userData.id, connection)
+    ContactsRepository.getContactsByUserId(userData.id)
       .then(contacts => {
         console.log('contacts', contacts);
         client.emit('contacts', contacts)
       });
     
-    ChatsRepository.getChatsByUserId(userData.id, connection)
+    ChatsRepository.getChatsByUserId(userData.id)
       .then(chats => {
         console.log('chatas', chats);
         client.emit('chats', chats)

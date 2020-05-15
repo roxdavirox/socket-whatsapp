@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const config = require('../../config.json');
 
-const usersRepository = require('../repositories/usersRepository');
+const userRepository = require('../repositories/usersRepository');
 const router = express.Router();
 
 const createToken = (params = {}) => jwt.sign(params, config.jwt.secret, {
@@ -31,39 +31,44 @@ const createToken = (params = {}) => jwt.sign(params, config.jwt.secret, {
 //   }
 // };
 
-const authenticateUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
 
-    const user = await usersRepository.getUserByEmail(email);
 
-    if (!user) { 
+// router.post('/register', registerNewUser);
+
+module.exports = ({ app }) => {
+  const authenticateUser = async (req, res) => {
+    try {
+      const { email,  } = req.body;
+      console.log('email', email);
+      const user = await userRepository.getUserByEmail(email);
+  
+      if (!user) { 
+        return res
+          .status(400)
+          .send({ error: 'User not found' });
+        }
+  
+      // if (!await bcrypt.compare(password, user.password)) {
+      //   return res
+      //     .status(400)
+      //     .send({ error: 'Invalid password' });
+      // }
+  
+      // user.password = undefined;
+  
+      return res.send({
+        user,
+        auth: true,
+        token: createToken({ user })
+      });
+    } catch (err) {
       return res
         .status(400)
-        .send({ error: 'User not found' });
-      }
-
-    if (!await bcrypt.compare(password, user.password)) {
-      return res
-        .status(400)
-        .send({ error: 'Invalid password' });
+        .send({ error: `${err}` });
     }
+  };
 
-    user.password = undefined;
+  router.post('/authenticate', authenticateUser);
 
-    return res.send({
-      user,
-      auth: true,
-      token: createToken({ user })
-    });
-  } catch (err) {
-    return res
-      .status(400)
-      .send({ error: `Error ${err}` });
-  }
+  return app.use('/auth', router)
 };
-
-router.post('/register', registerNewUser);
-router.post('/authenticate', authenticateUser);
-
-module.exports = (app) => app.use('/auth', router);

@@ -1,17 +1,15 @@
 const rethinkDb = require('rethinkdb');
 
-function ContactsRepository() {
+function ContactsRepository({ connection }) {
   return {
-    getContactsByUserId(userId, connection) {
+    getContactsByUserId(userId) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('contacts')
           .filter({ userId })
-          .run(connection).then(cursor => {
+          .run(connection)
+          .then(cursor => {
             cursor.toArray((err, contacts) => {
-              if(err) {
-                reject(err);
-                return;
-              }
+              if(err) reject(err);
               resolve(contacts);
             });
         });
@@ -20,4 +18,4 @@ function ContactsRepository() {
   }
 }
 
-module.exports = ContactsRepository();
+module.exports = deps => ContactsRepository(deps);
