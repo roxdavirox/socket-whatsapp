@@ -71,11 +71,16 @@ module.exports = ({ app }) => {
   };
 
   const validateUserToken = (req, res) => {
-    const { authUser } = req.body;
-    console.log('authUser', authUser);
+    const { token } = req;
+    const newToken = createToken({ user: token.user });
+
     return res
       .status(200)
-      .send({ user: authUser });
+      .send({ 
+        user: token.user,
+        token: newToken ,
+        auth: true
+      });
   }
 
   router.post('/authenticate', authenticateUser);
