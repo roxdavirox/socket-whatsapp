@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const config = require('../../config.json');
-
+const authMiddleware = require('../middlewares/auth');
 const userRepository = require('../repositories/usersRepository');
 const router = express.Router();
 
@@ -45,7 +45,7 @@ module.exports = ({ app }) => {
       if (!user) { 
         return res
           .status(400)
-          .send({ error: 'User not found' });
+          .send({ error: 'User not found', auth: false });
         }
   
       // usar bcrypt
@@ -53,7 +53,7 @@ module.exports = ({ app }) => {
       if(user.password !== password) {
         return res
           .status(400)
-          .send({ error: 'Invalid password '});
+          .send({ error: 'Invalid password ', auth: false});
       }
   
       user.password = undefined;
@@ -66,11 +66,20 @@ module.exports = ({ app }) => {
     } catch (err) {
       return res
         .status(400)
-        .send({ error: `${err}` });
+        .send({ error: `${err}`, auth: false });
     }
   };
 
+  const validateUserToken = (req, res) => {
+    const { authUser } = req.body;
+    console.log('authUser', authUser);
+    return res
+      .status(200)
+      .send({ user: authUser });
+  }
+
   router.post('/authenticate', authenticateUser);
+  router.post('/validate', authMiddleware, validateUserToken);
 
   return app.use('/auth', router)
 };

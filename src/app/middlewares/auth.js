@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
   if (!authHeader) { 
     return res
       .status(401)
-      .send({ error: 'No token provided' }); 
+      .send({ error: 'No token provided', auth: false }); 
   }
 
   const schemeAndToken = authHeader.split(' ');
@@ -16,25 +16,26 @@ module.exports = (req, res, next) => {
   if (schemeAndToken.length !== 2) { 
     return res
       .status(401)
-      .send({ error: 'Token error' }); 
+      .send({ error: 'Token error', auth: false }); 
   }
 
   const [scheme, token] = schemeAndToken;
 
-  if (!/^Bearer$/i.test(scheme)) { 
+  if (!/^Bearer:$/i.test(scheme)) { 
     return res
       .status(401)
-      .send({ error: 'Invalid token' });
+      .send({ error: 'Invalid token', auth: false });
   }
 
-  jwt.verify(token, config.jwt.secret, (err, decoded) => {
+  const { secret } = config.jwt;
+  jwt.verify(token, secret, (err, decoded) => {
     if (err) {
       return res
         .status(401)
-        .send({ error: 'Invalid token' });
+        .send({ error: 'Invalid token ' + err, auth: false });
     }
 
-    req.userId = decoded.id;
+    req.authUser = decoded;
 
     return next();
   });
