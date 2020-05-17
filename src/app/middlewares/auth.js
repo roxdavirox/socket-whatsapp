@@ -21,7 +21,7 @@ module.exports = (req, res, next) => {
 
   const [scheme, token] = schemeAndToken;
 
-  if (!/^Bearer:$/i.test(scheme)) { 
+  if (!scheme.includes('Bearer')) { 
     return res
       .status(401)
       .send({ error: 'Invalid token', auth: false });
@@ -35,7 +35,7 @@ module.exports = (req, res, next) => {
         .send({ error: 'Invalid token ' + err, auth: false });
     }
 
-    req.authUser = decoded;
+    req.token = decoded;
 
     return next();
   });
