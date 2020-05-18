@@ -226,7 +226,7 @@ module.exports = function(WhatsAppWeb) {
         let unreadMessages = chat.user.count
         while (unreadMessages > 0) {
             if (!chat.messages[j].key.fromMe) { // only forward if the message is from the sender
-                this.handlers.onUnreadMessage( chat.messages[j] ) // send off the unread message
+                // this.handlers.onUnreadMessage( chat.messages[j] ) // send off the unread message
                 unreadMessages -= 1 // reduce
             }
             j += 1
