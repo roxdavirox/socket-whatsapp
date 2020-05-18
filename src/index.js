@@ -1,19 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
 const server = require('http').Server(app);
-const io = require('socket.io')(server)
+const io = require('socket.io')(server);
+
 const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
-const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
-const fs = require('fs');
+const WhatsAppWeb = require("../core/lib/WhatsAppWeb");
 const ContactsRepository = require('./app/repositories/contactsRepository');
 const ChatsRepository = require('./app/repositories/chatsRepository');
 const MessagesRepository = require('./app/repositories/messagesRepository');
+const QrcodeRepository = require('./app/repositories/qrcodesRepository');
 
 global.hasWhatsappSocket = false;
 global.client = null;
@@ -37,11 +40,11 @@ io.use(jwtAuth.authenticate({
 }, function(payload, done) {
   // done is a callback, you can use it as follows
   console.log('[auth-socket] checking token');
-  console.log('payload', payload);
+  console.log('[qrcode-socket] payload', payload);
   const { user } = payload;
   if (!user) {
-    console.log('user not found at token');
-    return done(null, false, 'user not found at token');
+    console.log('[qrcode-socket] user not found at token');
+    return done(null, false, '[qrcode-socket] user not found at token');
   }
   return done(null, user);
 }));
@@ -50,29 +53,44 @@ io.use(jwtAuth.authenticate({
 const qrcodeSocket = io.of('qrcode');
 const chatSocket = io.of('chat');
 
-qrcodeSocket.on('connection', function(qrCodeClient) {
+qrcodeSocket.on('connection', function(qrcodeClient) {
   console.log('[qrcode-socket] new connection');
-  let whatsAppWeb = new WhatsAppWeb(); // instantiate
-  // primeira conexão com qrcode
-  // try {
-  //   const file = fs.readFileSync("auth_info.json") // load a closed session back if it exists
-  //   const authInfo = JSON.parse(file);
-  //   // console.log('authInfo', authInfo);
-  //   clientWhatsAppWeb.login(authInfo); // log back in using the info we just loaded
-    
-  // } catch {
-  //   // if no auth info exists, start a new session
-  // }
-  whatsAppWeb.connect(); // start a new session, with QR code scanning and what not
+  const { user } = qrcodeClient.request;
+  if (!user) {
+    console.log('[qrcode-socket] user not provided');
+    return;
+  }
 
-  isConnected = true;
+  let whatsAppWeb = new WhatsAppWeb();
+  if (user.role !== 'ADMIN') {
+    console.log('[qrcode-socket] user is not ADM role');
+    return;
+  }
 
-  qrCodeClient.on('import-contacts', function(contacts) {
+  QrcodeRepository
+    .getAuthQrcodeInfoByOwnerId(user.id)
+    .then(qrcode => {
+      if (!qrcode || !qrcode.isConnected) {
+        whatsAppWeb.connect(); // start a new session, with QR code scanning and what not
+        console.log('[qrcode-socket] ready to scan QRCODE', qrcode);
+        return qrcode; 
+      }
+      const { authInfo } = qrcode;
+      whatsAppWeb.login(authInfo);
+      console.log('[qrcode-socket] qrcode connected successfuly');
+      return qrcode;
+    })
+    .catch(console.error);
+
+  qrcodeClient.on('import-contacts', function(contacts) {
     const contactsWithValidJid = contacts.map(contact => ({
       ...contact,
       jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
-    }))
-    r.table('contacts').insert(contactsWithValidJid).run(connection);
+    }));
+
+    r.table('contacts')
+      .insert(contactsWithValidJid)
+      .run(connection);
   });
 
   whatsAppWeb.handlers.onConnected = () => {
@@ -80,48 +98,20 @@ qrcodeSocket.on('connection', function(qrCodeClient) {
       global.client = whatsAppWeb;
       global.hasWhatsappSocket = true;
     }
-    
-    console.log('[socket] handlers connected');
-    const authInfo = whatsAppWeb.base64EncodedAuthInfo() // get all the auth info we need to restore this session
-    fs.writeFileSync("auth_info.json", JSON.stringify(authInfo, null, "\t")) // save this info to a file
-    /* 
-      Note: one can take this file and login again from any computer without having to scan the QR code, and get full access to one's WhatsApp 
-      Despite the convenience, be careful with this file
-    */
+    // get all the auth info we need to restore this session
+    const authInfo = whatsAppWeb.base64EncodedAuthInfo() 
+    console.log('[qrcode-socket] storing qrcode auth info');
+    console.log('[qrcode-socket] authInfo', authInfo);
+    QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
+    console.log('[qrcode-socket] qrcode auth info stored successfuly');
   }
 
-  // cada client deve enviar os dados do usuario
-  // contato chat e o dono da conta através da mensagem
   whatsAppWeb.onNewMessage = async message => {
     console.log('nova mensagem do whatsapp:', message);
     if (message.key.fromMe || !message.key) return;
     if(message.key.remoteJid && message.key.remoteJid.includes('status')) return;
     const { remoteJid } = message.key;
     MessagesRepository.insertNewMessageFromWhatsApp(remoteJid, message);
-    // r.table('contacts').filter({ jid: message.key.remoteJid })
-    //   .run(connection).then((cursor) => {
-    //     cursor.toArray((e, contacts) => {
-    //       const [currentContact] = contacts;
-    //       if (!currentContact) return;
-    //       r.table('chats').filter({ contactId: currentContact.id })
-    //         .run(connection)
-    //         .then(chatCursor => {
-    //           chatCursor.toArray((e, chats) => {
-    //             const [chat] = chats;
-    //             if (!chat) return;
-    //             const newMessage = {
-    //               ownerId: currentContact.ownerId,
-    //               contactId: currentContact.id, 
-    //               userId: currentContact.userId,
-    //               chatId: chat.id,
-    //               time: new Date(),
-    //               ...message
-    //             };
-    //             r.table('messages').insert(newMessage).run(connection);
-    //           });
-    //         });
-    //     });;
-    // });       
   }
 
   whatsAppWeb.handlers.onReceiveContacts = async contacts => {
@@ -135,25 +125,24 @@ qrcodeSocket.on('connection', function(qrCodeClient) {
           eurl
         }
     }));
-    qrCodeClient.emit('adm-contacts', contactsWithPicture);
+    qrcodeClient.emit('adm-contacts', contactsWithPicture);
   }
 
   whatsAppWeb.handlers.onGenerateQrcode = qr => {
-    // console.log('qr:', qr);
-    qrCodeClient.emit('qrcode', qr);
+    qrcodeClient.emit('qrcode', qr);
   }
 
-  // called if an error occurs
   whatsAppWeb.handlers.onError = (err) => {
-    console.log(err);
+    console.error(err);
   }
-  whatsAppWeb.handlers.onDisconnect = () => { /* internet got disconnected, save chats here or whatever; will reconnect automatically */ }
+  whatsAppWeb.handlers.onDisconnect = () => { 
+    console.log('[qrcode-socket] internet error');
+  }
 });
 
-// O qrcode já deve estar conectado para o usuário poder acessar o chat
 chatSocket.on('connection', function(chatClient) {
   console.log('[qrcode-socket] new connection');
-  const { user } = chatSocket.request;
+  const { user } = chatClient.request;
 
   if (!user) {
     console.log('[chat-socket] no user provided');
@@ -167,26 +156,25 @@ chatSocket.on('connection', function(chatClient) {
   });
 
   chatClient.on('error', function (err) {
-    console.log('[socket-wp] received error from client:', chatClient.id)
+    console.log('[chat-socket] received error from client:', chatClient.id)
     console.log(err)
   });
   
   ContactsRepository.getContactsByUserId(user.id)
     .then(contacts => {
-      console.log('contacts', contacts);
-      chatClient.emit('contacts', contacts)
+      console.log('[chat-socket] contacts', contacts);
+      chatClient.emit('contacts', contacts);
+      ChatsRepository.getChatsByUserId(user.id)
+      .then(chats => {
+        console.log('[chat-socket] chats', chats);
+        chatClient.emit('chats', chats)
+      });
     });
   
-  ChatsRepository.getChatsByUserId(user.id)
-    .then(chats => {
-      console.log('chats', chats);
-      chatClient.emit('chats', chats)
-    });
-
   // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
   chatClient.on('message', (message) => {
     // envia mensagem do front para o whatsapp
-    console.log('message', message);
+    console.log('[chat-socket] new message', message);
     const { text, jid, contactId, chatId } = message;
     if (!global.client) return;
 
@@ -202,26 +190,11 @@ chatSocket.on('connection', function(chatClient) {
     };
 
     MessagesRepository.insertNewMessageFromClient(messageToStore);
+    console.log('[chat-socket] mensagem enviada');
   });
-
-  if (global.client){
-    // TODO: remover e utilizar os dados do token ao logar no client
-    chatClient.emit('userdata', global.client.getUserMetadata());
-  }
 
   const sendMessageToClient = msg => chatClient.emit('message', msg);
   MessagesRepository.waitForMessage(user.id, sendMessageToClient);
-  // r.table('messages')
-  //   .filter(r.row('userId').eq(user.id))
-  //   .changes()
-  //   .run(connection)
-  //   .then(cursor => {
-  //     cursor.each((err, data) => {
-  //       // console.log('data:', data);
-  //       const message = data.new_val;
-  //       client.emit('message', message);
-  //     });
-  // });
 })
 
 const port = process.env.PORT || 3001
