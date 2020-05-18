@@ -13,8 +13,8 @@ const WhatsAppWeb = require("../core/lib/WhatsAppWeb")
 const fs = require('fs');
 const ContactsRepository = require('./app/repositories/contactsRepository');
 const ChatsRepository = require('./app/repositories/chatsRepository');
+const MessagesRepository = require('./app/repositories/messagesRepository');
 
-var isConnected = false;
 global.hasWhatsappSocket = false;
 global.client = null;
 global.connection = null;
@@ -48,7 +48,7 @@ io.use(jwtAuth.authenticate({
 
 // TODO: separar os tipos de conexões
 const qrcodeSocket = io.of('qrcode');
-const chatSocket = io.if('chat');
+const chatSocket = io.of('chat');
 
 qrcodeSocket.on('connection', function(qrCodeClient) {
   console.log('[qrcode-socket] new connection');
@@ -96,31 +96,32 @@ qrcodeSocket.on('connection', function(qrCodeClient) {
     console.log('nova mensagem do whatsapp:', message);
     if (message.key.fromMe || !message.key) return;
     if(message.key.remoteJid && message.key.remoteJid.includes('status')) return;
-
-    r.table('contacts').filter({ jid: message.key.remoteJid })
-      .run(connection).then((cursor) => {
-        cursor.toArray((e, contacts) => {
-          const [currentContact] = contacts;
-          if (!currentContact) return;
-          r.table('chats').filter({ contactId: currentContact.id })
-            .run(connection)
-            .then(chatCursor => {
-              chatCursor.toArray((e, chats) => {
-                const [chat] = chats;
-                if (!chat) return;
-                const newMessage = {
-                  ownerId: currentContact.ownerId,
-                  contactId: currentContact.id, 
-                  userId: currentContact.userId,
-                  chatId: chat.id,
-                  time: new Date(),
-                  ...message
-                };
-                r.table('messages').insert(newMessage).run(connection);
-              });
-            });
-        });;
-    });       
+    const { remoteJid } = message.key;
+    MessagesRepository.insertNewMessageFromWhatsApp(remoteJid, message);
+    // r.table('contacts').filter({ jid: message.key.remoteJid })
+    //   .run(connection).then((cursor) => {
+    //     cursor.toArray((e, contacts) => {
+    //       const [currentContact] = contacts;
+    //       if (!currentContact) return;
+    //       r.table('chats').filter({ contactId: currentContact.id })
+    //         .run(connection)
+    //         .then(chatCursor => {
+    //           chatCursor.toArray((e, chats) => {
+    //             const [chat] = chats;
+    //             if (!chat) return;
+    //             const newMessage = {
+    //               ownerId: currentContact.ownerId,
+    //               contactId: currentContact.id, 
+    //               userId: currentContact.userId,
+    //               chatId: chat.id,
+    //               time: new Date(),
+    //               ...message
+    //             };
+    //             r.table('messages').insert(newMessage).run(connection);
+    //           });
+    //         });
+    //     });;
+    // });       
   }
 
   whatsAppWeb.handlers.onReceiveContacts = async contacts => {
@@ -149,7 +150,6 @@ qrcodeSocket.on('connection', function(qrCodeClient) {
   whatsAppWeb.handlers.onDisconnect = () => { /* internet got disconnected, save chats here or whatever; will reconnect automatically */ }
 });
 
-
 // O qrcode já deve estar conectado para o usuário poder acessar o chat
 chatSocket.on('connection', function(chatClient) {
   console.log('[qrcode-socket] new connection');
@@ -171,15 +171,15 @@ chatSocket.on('connection', function(chatClient) {
     console.log(err)
   });
   
-  ContactsRepository.getContactsByUserId(userData.id)
+  ContactsRepository.getContactsByUserId(user.id)
     .then(contacts => {
       console.log('contacts', contacts);
       chatClient.emit('contacts', contacts)
     });
   
-  ChatsRepository.getChatsByUserId(userData.id)
+  ChatsRepository.getChatsByUserId(user.id)
     .then(chats => {
-      console.log('chatas', chats);
+      console.log('chats', chats);
       chatClient.emit('chats', chats)
     });
 
@@ -188,39 +188,45 @@ chatSocket.on('connection', function(chatClient) {
     // envia mensagem do front para o whatsapp
     console.log('message', message);
     const { text, jid, contactId, chatId } = message;
-    // TODO: buscar chat id de acordo com o id do contato
     if (!global.client) return;
+
     const messageSent = global.client.sendTextMessage(jid, text);
-    r.table('messages').insert({
-      ownerId: userData.ownerId,
-      userId: userData.id,
+
+    const messageToStore = {
+      ownerId: user.role === 'ADMIN' ? user. id : user.ownerId,
+      userId: user.id,
       contactId, 
       chatId,
       time: message.time, 
       ...messageSent
-    }).run(connection);
+    };
+
+    MessagesRepository.insertNewMessageFromClient(messageToStore);
   });
+
   if (global.client){
-    client.emit('userdata', global.client.getUserMetadata());
-    // console.log('data user', global.client.getUserMetadata());
+    // TODO: remover e utilizar os dados do token ao logar no client
+    chatClient.emit('userdata', global.client.getUserMetadata());
   }
 
-  r.table('messages')
-    .filter(r.row('userId').eq(userData.id))
-    .changes()
-    .run(connection)
-    .then(cursor => {
-      cursor.each((err, data) => {
-        // console.log('data:', data);
-        const message = data.new_val;
-        client.emit('message', message);
-      });
-  });
+  const sendMessageToClient = msg => chatClient.emit('message', msg);
+  MessagesRepository.waitForMessage(user.id, sendMessageToClient);
+  // r.table('messages')
+  //   .filter(r.row('userId').eq(user.id))
+  //   .changes()
+  //   .run(connection)
+  //   .then(cursor => {
+  //     cursor.each((err, data) => {
+  //       // console.log('data:', data);
+  //       const message = data.new_val;
+  //       client.emit('message', message);
+  //     });
+  // });
 })
 
 const port = process.env.PORT || 3001
 
 server.listen(port, function (err) {
   if (err) throw err
-  console.log('[node-server] whatsapp socket listening on port ', port)
+  console.log('[node-server] whatsapp api listening on port ', port)
 })

@@ -14,7 +14,23 @@ function ContactsRepository() {
             });
         });
       })
-    }
+    },
+
+    async getContactByRemoteJid(remoteIjd) {
+      return new Promise((resolve, reject) => {
+        const handleResolveContact = (error, contact) => {
+          if (error) reject(error);
+          resolve(contact);
+        };
+
+        const getFirstContact = cursor => cursor.next(handleResolveContact);
+        
+        rethinkDb.table('contacts')
+          .filter({ jid: remoteIjd })
+          .run(global.connection)
+          .then(getFirstContact);
+      })
+    },
   }
 }
 

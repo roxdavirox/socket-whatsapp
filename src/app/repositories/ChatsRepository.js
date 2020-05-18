@@ -16,7 +16,7 @@ function ChatsRepository() {
       });
     },
 
-    getChatByUserId(userId){
+    getChatByUserId(userId) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('chats')
           .filter({ userId })
@@ -30,6 +30,23 @@ function ChatsRepository() {
             });
           });
       });
+    },
+
+    async getChatByContactId(contactId) {
+      return new Promise((resolve, reject) => {
+        const resolveChat = (error, chat) => {
+          if (error) reject(error);
+          resolve(chat);
+        };
+
+        const getFirstChat = cursor => cursor.next(resolveChat);
+
+        rethinkDb
+          .table('chats')
+          .filter({ contactId })
+          .run(global.connection)
+          .then(getFirstChat);
+      })
     }
   }
 }
