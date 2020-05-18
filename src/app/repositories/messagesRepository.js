@@ -6,7 +6,12 @@ const ChatsRepository = require('./chatsRepository');
 function MessagesRepository() {
   return {
     async waitForMessage(userId, cb) {
-      const sendEachMessage = cursor => cursor.each((error, msg) => cb(msg.new_value));
+      const sendEachMessage = cursor => {
+        cursor.each((error, msg) => {
+          const newValue = msg.new_val;
+          cb(newValue);
+        });
+      }
 
       return rethinkDb
         .table('messages')
@@ -41,7 +46,7 @@ function MessagesRepository() {
       });
     },
 
-    async insetNewMessageFromClient(message) {
+    async insertNewMessageFromClient(message) {
       return new Promise((resolve, reject) => {
         if (!message) reject("no message provided");
         rethinkDb.table('messages')
