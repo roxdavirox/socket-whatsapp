@@ -5,16 +5,17 @@ function UsersRepository() {
   return {
     async getUserByEmail(email) {
       return new Promise((resolve, reject) => {
-        const handleResolveUser = (error, user) => {
-          if (error) reject(error);
+        const resolveFirstUser = (error, users) => {
+          if (error) resolve('user not found error:', error);
+          const [user] = users;
+          if (!user) resolve(false);
           resolve(user);
         };
-        const getFirstUser = cursor => cursor.next(handleResolveUser);
         rethinkDb
           .table('users')
           .filter({ email })
           .run(global.connection)
-          .then(getFirstUser);
+          .then(cursor => cursor.toArray(resolveFirstUser));
       })
     }
   }
