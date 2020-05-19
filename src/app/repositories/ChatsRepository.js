@@ -35,7 +35,7 @@ function ChatsRepository() {
     async getChatByContactId(contactId) {
       return new Promise((resolve, reject) => {
         const resolveChat = (error, chat) => {
-          if (error) reject(error);
+          if (error) reject('getChatByContactId error:', error);
           resolve(chat);
         };
 
