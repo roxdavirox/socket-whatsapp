@@ -67,7 +67,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     return;
   }
 
-  let whatsAppWeb = sharedSessions.setSession(new WhatsAppWeb(), user.id);
+  let whatsAppWeb = sharedSessions.createSession(new WhatsAppWeb(), user.id);
   
   console.log('[qrcode-socket] new connection');
 

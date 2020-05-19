@@ -3,7 +3,7 @@ class SharedSession {
     this.sessions = {};
   }
 
-  setSession(session, id) {
+  createSession(session, id) {
     this.sessions[id] = session;
     return session;
   }
