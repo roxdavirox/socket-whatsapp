@@ -60,8 +60,14 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     console.log('[qrcode-socket] user not provided');
     return;
   }
-  
+
+  if (user.role !== 'ADMIN') {
+    console.log('[qrcode-socket] user is not ADM role');
+    return;
+  }
+
   const sessionExists = sharedSessions.sessionExists(user.id);
+  
   if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
     return;
@@ -71,10 +77,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   
   console.log('[qrcode-socket] new connection');
 
-  if (user.role !== 'ADMIN') {
-    console.log('[qrcode-socket] user is not ADM role');
-    return;
-  }
+
 
   QrcodeRepository
     .getAuthQrcodeInfoByOwnerId(user.id)
