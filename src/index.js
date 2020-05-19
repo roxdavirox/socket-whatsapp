@@ -13,13 +13,12 @@ const io = require('socket.io')(server);
 const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
 const WhatsAppWeb = require("../core/lib/WhatsAppWeb");
+const SharedSession = require('./app/session/SharedSession');
 const ContactsRepository = require('./app/repositories/contactsRepository');
 const ChatsRepository = require('./app/repositories/chatsRepository');
 const MessagesRepository = require('./app/repositories/messagesRepository');
 const QrcodeRepository = require('./app/repositories/qrcodesRepository');
 
-global.hasWhatsappSocket = false;
-global.client = null;
 global.connection = null;
 const dbContext = require('./app/data');
 
@@ -53,15 +52,25 @@ io.use(jwtAuth.authenticate({
 const qrcodeSocket = io.of('qrcode');
 const chatSocket = io.of('chat');
 
+const sharedSessions = new SharedSession();
+
 qrcodeSocket.on('connection', function(qrcodeClient) {
-  console.log('[qrcode-socket] new connection');
   const { user } = qrcodeClient.request;
   if (!user) {
     console.log('[qrcode-socket] user not provided');
     return;
   }
+  
+  const sessionExists = sharedSessions.sessionExists(user.id);
+  if (sessionExists) {
+    console.log('[qrcode-socket] session alredy exists');
+    return;
+  }
 
-  let whatsAppWeb = new WhatsAppWeb();
+  let whatsAppWeb = sharedSessions.setSession(new WhatsAppWeb(), user.id);
+  
+  console.log('[qrcode-socket] new connection');
+
   if (user.role !== 'ADMIN') {
     console.log('[qrcode-socket] user is not ADM role');
     return;
@@ -90,14 +99,10 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
 
     r.table('contacts')
       .insert(contactsWithValidJid)
-      .run(connection);
+      .run(global.connection);
   });
 
   whatsAppWeb.handlers.onConnected = () => {
-    if (!global.hasWhatsappSocket) {
-      global.client = whatsAppWeb;
-      global.hasWhatsappSocket = true;
-    }
     // get all the auth info we need to restore this session
     const authInfo = whatsAppWeb.base64EncodedAuthInfo() 
     console.log('[qrcode-socket] storing qrcode auth info');
@@ -117,7 +122,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   whatsAppWeb.handlers.onReceiveContacts = async contacts => {
     const contactsWithPicture = await Promise.all(
       contacts.map(async contact => {
-        const result = await global.client.query(['query', 'ProfilePicThumb', contact.jid]);
+        const result = await whatsAppWeb.query(['query', 'ProfilePicThumb', contact.jid]);
         if (!result.eurl) return contact;
         const { eurl } = result;
         return {
@@ -136,7 +141,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     console.error(err);
   }
   whatsAppWeb.handlers.onDisconnect = () => { 
-    console.log('[qrcode-socket] internet error');
+    console.log('[qrcode-socket] whatsapp disconnected');
   }
 });
 
@@ -149,6 +154,13 @@ chatSocket.on('connection', function(chatClient) {
     chatClient.disconnect();
     return;
   }
+
+  const hasActiveOwnerSession = sharedSessions.sessionExists(user.ownerId);
+  if (!hasActiveOwnerSession) {
+    console.log('[chat-socket] no active owner session');
+    return;
+  }
+  const whatsAppWeb = sharedSessions.getSession(user.ownerId);
 
   chatClient.on('disconnect', function () {
     console.log('client disconnect...', chatClient.id)
@@ -176,9 +188,9 @@ chatSocket.on('connection', function(chatClient) {
     // envia mensagem do front para o whatsapp
     console.log('[chat-socket] new message', message);
     const { text, jid, contactId, chatId } = message;
-    if (!global.client) return;
+    if (!whatsAppWeb) return;
 
-    const messageSent = global.client.sendTextMessage(jid, text);
+    const messageSent = whatsAppWeb.sendTextMessage(jid, text);
 
     const messageToStore = {
       ownerId: user.role === 'ADMIN' ? user. id : user.ownerId,
