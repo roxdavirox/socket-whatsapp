@@ -21,7 +21,7 @@ function MessagesRepository() {
         .then(sendEachMessage);
     },
 
-    async insertNewMessageFromWhatsApp(remoteJid, message) {
+    async addNewMessageFromWhatsApp(remoteJid, message) {
       return new Promise(async (resolve, reject) => {
         const contact = await ContactsRepository.getContactByRemoteJid(remoteJid);
         if (!contact) reject("Contact not found");
@@ -46,7 +46,7 @@ function MessagesRepository() {
       });
     },
 
-    async insertNewMessageFromClient(message) {
+    async addNewMessageFromClient(message) {
       return new Promise((resolve, reject) => {
         if (!message) reject("no message provided");
         rethinkDb.table('messages')
