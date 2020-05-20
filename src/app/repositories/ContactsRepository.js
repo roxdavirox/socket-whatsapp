@@ -13,24 +13,78 @@ function ContactsRepository() {
               resolve(contacts);
             });
         });
-      })
+      });
     },
 
     async getContactByRemoteJid(remoteIjd) {
       return new Promise((resolve, reject) => {
-        const handleResolveContact = (error, contact) => {
-          if (error) reject(error);
+        const getFirst = (error, contacts) => {
+          if (error) {
+            console.log('contact repo error: ', error);
+            reject(error);
+            return false;
+          }
+          const [contact] = contacts;
+          if (!contact) {
+            console.log('contact undefined');
+            return false;
+          }
           resolve(contact);
         };
 
-        const getFirstContact = cursor => cursor.next(handleResolveContact);
-        
         rethinkDb.table('contacts')
           .filter({ jid: remoteIjd })
           .run(global.connection)
-          .then(getFirstContact);
-      })
+          .then(cursor => cursor.toArray(getFirst));
+      });
     },
+
+    async addContacts(contacts) {
+      return new Promise((resolve, reject) => {
+        if (!contacts) {
+          reject("contacts is undefined");
+          return;
+        }
+
+        rethinkDb
+          .table('contacts')
+          .insert(contacts)
+          .run(global.connection);
+        
+        resolve(contacts);
+      });
+    },
+
+    async addContact(contact = {}) {
+      if (!contact) {
+        reject("contact is undefined");
+        return;
+      }
+
+      const result = rethinkDb
+        .table('contacts')
+        .insert(contact)
+        .run(global.connection);
+      resolve(result);
+    },
+
+    async contactExistsByJid(contactJid) {
+      if (!contactJid) {
+        reject("jid not found");
+        return;
+      }
+
+      const remoteJid = contactJid.includes('@s.whatsapp.net') 
+        ? contactJid 
+        : `${contactJid}@s.whatsapp.net`;
+
+      const contact = await this.getContactByRemoteJid(remoteJid);
+      if (!contact) {
+        return false;
+      }
+
+      return contact.jid === remoteJid;
+    }
   }
 }
 
