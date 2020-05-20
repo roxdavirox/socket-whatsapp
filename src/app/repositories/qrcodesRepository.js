@@ -5,9 +5,7 @@ function QrcodesRepository() {
   return {
     async getAuthQrcodeInfoByOwnerId(ownerId) {
       return new Promise((resolve, reject) => {
-        // verifica se existe
-
-        const resolveFirstQrcode = (error, qrcodes) => {
+        const getFirstQrcode = (error, qrcodes) => {
           if (error) resolve(error);
           const [qrcode] = qrcodes;
           if (!qrcode) resolve(false);
@@ -18,9 +16,7 @@ function QrcodesRepository() {
           .table('qrcodes')
           .filter({ ownerId })
           .run(global.connection)
-          .then(cursor => {
-            cursor.toArray(resolveFirstQrcode);
-          });
+          .then(cursor => cursor.toArray(getFirstQrcode));
       })
     },
 
