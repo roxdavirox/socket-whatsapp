@@ -27,6 +27,7 @@ function ContactsRepository() {
           const [contact] = contacts;
           if (!contact) {
             console.log('contact undefined');
+            resolve(false);
             return false;
           }
           resolve(contact);
