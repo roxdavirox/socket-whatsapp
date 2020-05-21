@@ -67,7 +67,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   }
 
   const sessionExists = sharedSessions.sessionExists(user.id);
-  
+
   if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
     return;
@@ -100,9 +100,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
       jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
     }));
 
-    r.table('contacts')
-      .insert(contactsWithValidJid)
-      .run(global.connection);
+    ContactsRepository.addContacts(contactsWithValidJid);
   });
 
   whatsAppWeb.handlers.onConnected = () => {
@@ -119,7 +117,16 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     if (message.key.fromMe || !message.key) return;
     if(message.key.remoteJid && message.key.remoteJid.includes('status')) return;
     const { remoteJid } = message.key;
-    MessagesRepository.insertNewMessageFromWhatsApp(remoteJid, message);
+    const contactExists = await ContactsRepository.contactExistsByJid(remoteJid);
+    console.log('whatsAppWeb contactExists', contactExists);
+    // verificar se o contato existe antes de armazenar a mensagem
+    // caso não exista. cria o contato e associa com o numero do ADM
+    // é possivel pegar o numero do adm pelo user logado - apenas adms chegam aqui
+    // ao criar o contato - criar um chat e associar o contato com o adm
+    // - caso  o contato ja exista - verificar se existe algum chat
+    // caso nao exista cria um novo(associando o contato com o adm) e envia
+    // para o socket do chat para o front
+    MessagesRepository.addNewMessageFromWhatsApp(remoteJid, message);
   }
 
   whatsAppWeb.handlers.onReceiveContacts = async contacts => {
@@ -204,7 +211,7 @@ chatSocket.on('connection', function(chatClient) {
       ...messageSent
     };
 
-    MessagesRepository.insertNewMessageFromClient(messageToStore);
+    MessagesRepository.addNewMessageFromClient(messageToStore);
     console.log('[chat-socket] mensagem enviada');
   });
 
