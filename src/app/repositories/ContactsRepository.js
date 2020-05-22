@@ -57,16 +57,26 @@ function ContactsRepository() {
     },
 
     async addContact(contact = {}) {
-      if (!contact) {
-        reject("contact is undefined");
-        return;
-      }
-
-      const result = rethinkDb
-        .table('contacts')
-        .insert(contact)
-        .run(global.connection);
-      resolve(result);
+      return new Promise((resolve, reject) => {
+        if (!contact) {
+          reject("contact is undefined");
+          return;
+        }
+  
+        rethinkDb
+          .table('contacts')
+          .insert(contact)
+          .run(global.connection)
+          .then(res => {
+            if (res.inserted > 0) {
+              const { generated_keys } = res;
+              const [contactId] = generated_keys;
+              resolve(contactId);
+              return;
+            }
+            reject("Contact not inserted");
+          });
+      })
     },
 
     async contactExistsByJid(contactJid) {

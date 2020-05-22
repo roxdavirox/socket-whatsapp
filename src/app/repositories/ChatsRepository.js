@@ -46,8 +46,33 @@ function ChatsRepository() {
               resolve(chat);
             });
           });
+      });
+    },
+
+    async addChat(chat = {}) {
+      return new Promise((resolve, reject) => {
+        if (!chat) {
+          reject("chat is undefined");
+          return;
+        }
+  
+        rethinkDb
+          .table('chats')
+          .insert(chat)
+          .run(global.connection)
+          .then(res => {
+            if (res.inserted > 0) {
+              const { generated_keys } = res;
+              const [chatId] = generated_keys;
+              resolve(chatId);
+              return;
+            }
+            reject("chat not inserted");
+          });
       })
-    }
+    },
+
+
   }
 }
 
