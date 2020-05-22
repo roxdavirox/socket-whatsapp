@@ -119,6 +119,18 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     const { remoteJid } = message.key;
     const contactExists = await ContactsRepository.contactExistsByJid(remoteJid);
     console.log('whatsAppWeb contactExists', contactExists);
+    if (!contactExists) {
+      const phone = remoteJid.split('@')[0];
+      const contact = await ContactsRepository.addContact({
+        jid: remoteJid,
+        ownerId: user.id,
+        userId: user.id,
+        phone,
+        name: phone,
+        short: phone
+      });
+      console.log('contact:', contact);
+    }
     // verificar se o contato existe antes de armazenar a mensagem
     // caso não exista. cria o contato e associa com o numero do ADM
     // é possivel pegar o numero do adm pelo user logado - apenas adms chegam aqui
@@ -165,12 +177,16 @@ chatSocket.on('connection', function(chatClient) {
     return;
   }
 
-  const hasActiveOwnerSession = sharedSessions.sessionExists(user.ownerId);
+  const ownerId = user.role === 'ADMIN'
+    ? user.id
+    : user.ownerId;
+
+  const hasActiveOwnerSession = sharedSessions.sessionExists(ownerId);
   if (!hasActiveOwnerSession) {
     console.log('[chat-socket] no active owner session');
     return;
   }
-  const whatsAppWeb = sharedSessions.getSession(user.ownerId);
+  const whatsAppWeb = sharedSessions.getSession(ownerId);
 
   chatClient.on('disconnect', function () {
     console.log('client disconnect...', chatClient.id)
@@ -203,7 +219,7 @@ chatSocket.on('connection', function(chatClient) {
     const messageSent = whatsAppWeb.sendTextMessage(jid, text);
 
     const messageToStore = {
-      ownerId: user.role === 'ADMIN' ? user. id : user.ownerId,
+      ownerId,
       userId: user.id,
       contactId, 
       chatId,
