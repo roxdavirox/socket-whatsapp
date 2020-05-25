@@ -23,7 +23,31 @@ function UsersRepository() {
           .run(global.connection)
           .then(cursor => cursor.toArray(getFirstUser));
       })
-    }
+    },
+
+    async getUsersByOwnerId(ownerId) {
+      return new Promise((resolve, reject) => {
+        const getAll = (error, users) => {
+          if (error) {
+            console.log('users repo error: ', error);
+            reject(error);
+            return false;
+          }
+          
+          if (!users) {
+            console.log('users undefined');
+            resolve(false);
+            return false;
+          }
+          resolve(users);
+        };
+
+        rethinkDb.table('users')
+          .filter({ ownerId })
+          .run(global.connection)
+          .then(cursor => cursor.toArray(getAll));
+      });
+    },
   }
 }
 
