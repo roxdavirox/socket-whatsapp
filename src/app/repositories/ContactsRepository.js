@@ -129,6 +129,24 @@ function ContactsRepository() {
           .then(() => resolve(true));
 
       });
+    },
+
+    async updateName(contactId, name) {
+      return new Promise((resolve, reject) => {
+        if (!contactId || !name) {
+          console.log('data undefined');
+          reject('data undefined');
+          return;
+        }
+
+        rethinkDb
+          .table('contacts')
+          .get(contactId)
+          .update({ name, short: name, notify: name })
+          .run(global.connection)
+          .then(() => resolve(true));
+
+      });
     }
   }
 }
