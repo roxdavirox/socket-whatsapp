@@ -18,6 +18,7 @@ const ContactsRepository = require('./app/repositories/contactsRepository');
 const ChatsRepository = require('./app/repositories/chatsRepository');
 const MessagesRepository = require('./app/repositories/messagesRepository');
 const QrcodeRepository = require('./app/repositories/qrcodesRepository');
+const UsersRepository = require('./app/repositories/usersRepository');
 
 global.connection = null;
 const dbContext = require('./app/data');
@@ -188,6 +189,7 @@ chatSocket.on('connection', function(chatClient) {
   }
   const whatsAppWeb = sharedSessions.getSession(ownerId);
 
+  chatClient.join(user.id);
   chatClient.on('disconnect', function () {
     console.log('client disconnect...', chatClient.id)
     chatClient.disconnect();
@@ -209,6 +211,11 @@ chatSocket.on('connection', function(chatClient) {
       });
     });
   
+  UsersRepository.getUsersByOwnerId(ownerId)
+    .then(users => {
+      console.log('[chat-socket] users to transfer', users);
+      chatClient.emit('transferUsers', users);
+    });
   // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
   chatClient.on('message', (message) => {
     // envia mensagem do front para o whatsapp
@@ -229,6 +236,22 @@ chatSocket.on('connection', function(chatClient) {
 
     MessagesRepository.addNewMessageFromClient(messageToStore);
     console.log('[chat-socket] mensagem enviada');
+  });
+
+  chatClient.on('transfer', async function(data) {
+    if (!data.userId || !data.contactId) {
+      console.log('[chat-socket] transfer error');
+      return;
+    }
+
+    const { contactId, userId } = data;
+
+    await ContactsRepository.updateByContactId(contactId, userId);
+
+    await ChatsRepository.updateByContactId(contactId, userId);
+    const chat = await ChatsRepository.getChatByContactId(contactId);
+    const contactToTransfer = await ContactsRepository.getContactById(contactId);
+    chatClient.to(userId).emit('transferContact', { contact: contactToTransfer, chat });
   });
 
   const sendMessageToClient = msg => chatClient.emit('message', msg);
