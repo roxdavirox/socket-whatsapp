@@ -238,6 +238,16 @@ chatSocket.on('connection', function(chatClient) {
     console.log('[chat-socket] mensagem enviada');
   });
 
+  chatClient.on('saveContact', async function(data) {
+    if (!data.contactId || !data.name) {
+      console.log('[chat-socket] save contact error');
+      return;
+    }
+
+    const { contactId, name } = data;
+    await ContactsRepository.updateName(contactId, name);
+  });
+
   chatClient.on('transfer', async function(data) {
     if (!data.userId || !data.contactId) {
       console.log('[chat-socket] transfer error');
