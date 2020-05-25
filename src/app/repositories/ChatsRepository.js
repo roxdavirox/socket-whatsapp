@@ -72,6 +72,23 @@ function ChatsRepository() {
       })
     },
 
+    async updateByContactId(contactId, userId) {
+      return new Promise((resolve, reject) => {
+        if (!contactId || !userId) {
+          console.log('data undefined');
+          reject('data undefined');
+          return;
+        }
+
+        rethinkDb
+          .table('chats')
+          .filter({ contactId })
+          .update({ userId })
+          .run(global.connection)
+          .then(() => resolve(true));
+        
+      });
+    }
 
   }
 }

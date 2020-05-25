@@ -16,6 +16,22 @@ function ContactsRepository() {
       });
     },
 
+    async getContactById(contactId) {
+      return new Promise((resolve, reject) => {
+        if (!contactId) {
+          console.log('undefined contactId');
+          reject(false)
+        }
+
+        rethinkDb.table('contacts')
+          .get(contactId)
+          .run(global.connection)
+          .then(contact => {
+            resolve(contact);
+          });
+      });
+    },
+
     async getContactByRemoteJid(remoteIjd) {
       return new Promise((resolve, reject) => {
         const getFirst = (error, contacts) => {
@@ -95,6 +111,24 @@ function ContactsRepository() {
       }
 
       return contact.jid === remoteJid;
+    },
+
+    async updateByContactId(contactId, userId) {
+      return new Promise((resolve, reject) => {
+        if (!contactId || !userId) {
+          console.log('data undefined');
+          reject('data undefined');
+          return;
+        }
+
+        rethinkDb
+          .table('contacts')
+          .get(contactId)
+          .update({ userId })
+          .run(global.connection)
+          .then(() => resolve(true));
+
+      });
     }
   }
 }
