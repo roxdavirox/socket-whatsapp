@@ -118,9 +118,9 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   // caso nao exista cria um novo(associando o contato com o adm)
   whatsAppWeb.onNewMessage = async message => {
     if (message.key.fromMe || !message.key) return;
-    const isNotFromGroup = !message.key.remoteJid.includes('-');
+    const isGroup = message.key.remoteJid.includes('-');
     const isStatus = message.key.remoteJid.includes('status');
-    if(message.key.remoteJid && isStatus && isNotFromGroup) return;
+    if(message.key.remoteJid && (isStatus || isGroup)) return;
     console.log('nova mensagem do whatsapp:', message);
 
     const { remoteJid } = message.key;
