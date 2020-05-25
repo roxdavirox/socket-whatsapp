@@ -110,12 +110,6 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     console.log('[qrcode-socket] qrcode auth info stored successfuly');
   }
 
-  // verificar se o contato existe antes de armazenar a mensagem
-  // caso não exista. cria o contato e associa com o numero do ADM
-  // é possivel pegar o numero do adm pelo user logado - apenas adms chegam aqui
-  // ao criar o contato - criar um chat e associar o contato com o adm
-  // - caso  o contato ja exista - verificar se existe algum chat
-  // caso nao exista cria um novo(associando o contato com o adm)
   whatsAppWeb.onNewMessage = async message => {
     if (message.key.fromMe || !message.key) return;
     const isGroup = message.key.remoteJid.includes('-');
