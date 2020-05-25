@@ -224,13 +224,13 @@ module.exports = function(WhatsAppWeb) {
 		const chat = this.chats[id] // get the chat
         var j = 0
         let unreadMessages = chat.user.count
-        while (unreadMessages > 0) {
-            if (!chat.messages[j].key.fromMe) { // only forward if the message is from the sender
-                // this.handlers.onUnreadMessage( chat.messages[j] ) // send off the unread message
-                unreadMessages -= 1 // reduce
-            }
-            j += 1
-        }
+        // while (unreadMessages > 0) {
+        //     if (!chat.messages[j].key.fromMe) { // only forward if the message is from the sender
+        //         // this.handlers.onUnreadMessage( chat.messages[j] ) // send off the unread message
+        //         unreadMessages -= 1 // reduce
+        //     }
+        //     j += 1
+        // }
     }
     // when a new message is recieved
 	WhatsAppWeb.prototype.onNewMessage = function (message) {
