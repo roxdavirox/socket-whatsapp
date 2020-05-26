@@ -6,15 +6,25 @@ services:
       - "8080:8080"
       - "28015:28015"
       - "29015:29015"
+    networks:
+      webproxy:
+        ipv4_address: 173.17.0.2
+    
   server:
     build: .
     volumes:
-      - ./:/usr/app
-      - /usr/app/node_modules
-
-    # working_dir: /usr/src/app
-    # command: npm start
+      - ./:/app/
+      - /app/node_modules
     ports:
       - "3001:3001"
     depends_on:
       - db
+    networks:
+      - webproxy
+
+networks:
+  webproxy:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 173.17.0.0/24

@@ -1,8 +1,8 @@
 FROM node
 
 RUN apt-get update
-RUN mkdir /usr/app
-WORKDIR /usr/app
+RUN mkdir /app
+WORKDIR /app
 
 COPY package*.json ./
 COPY . .
