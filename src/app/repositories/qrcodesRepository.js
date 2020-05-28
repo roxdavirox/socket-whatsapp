@@ -34,6 +34,16 @@ function QrcodesRepository() {
       })
     },
 
+    getQrcodeStatusByOwnerId(ownerId) {
+      let qrcodeIsConnected = false;
+      this.getAuthQrcodeInfoByOwnerId(ownerId)
+        .then(qrcode => {
+          qrcodeIsConnected = qrcode && qrcode.isConnected;
+        });
+        
+      return qrcodeIsConnected;
+    },
+
     async storeQrcodeAuthInfo(authInfo, ownerId) {
       return new Promise(async (resolve, reject) => {
         const qrcode = await this.getAuthQrcodeInfoByOwnerId(ownerId);
