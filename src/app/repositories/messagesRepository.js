@@ -21,6 +21,23 @@ function MessagesRepository() {
         .then(sendEachMessage);
     },
 
+    async getMessagesByContactId(contactId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb
+          .table('messages')
+          .filter({ contactId })
+          .run(global.connection)
+          .then(cursor => cursor.toArray((error, messages) => { 
+            if (error) { 
+              reject('Error when get contact messages: ', error);
+              return;
+            }
+            resolve(messages);
+          }))
+          .catch(reject);
+      });
+    },
+
     async addNewMessageFromWhatsApp(remoteJid, message) {
       return new Promise(async (resolve, reject) => {
         const contact = await ContactsRepository.getContactByRemoteJid(remoteJid);

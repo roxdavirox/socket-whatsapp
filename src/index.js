@@ -93,14 +93,14 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     })
     .catch(console.error);
 
-  qrcodeClient.on('import-contacts', function(contacts) {
-    const contactsWithValidJid = contacts.map(contact => ({
-      ...contact,
-      jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
-    }));
+  // qrcodeClient.on('import-contacts', function(contacts) {
+  //   const contactsWithValidJid = contacts.map(contact => ({
+  //     ...contact,
+  //     jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
+  //   }));
 
-    ContactsRepository.addContacts(contactsWithValidJid);
-  });
+  //   ContactsRepository.addContacts(contactsWithValidJid);
+  // });
 
   whatsAppWeb.handlers.onConnected = () => {
     // get all the auth info we need to restore this session
@@ -213,7 +213,7 @@ chatSocket.on('connection', function(chatClient) {
   
   UsersRepository.getUsersByOwnerId(ownerId)
     .then(users => {
-      console.log('[chat-socket] users to transfer', users);
+      // console.log('[chat-socket] users to transfer', users);
       chatClient.emit('transferUsers', users);
     });
   // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
@@ -236,6 +236,16 @@ chatSocket.on('connection', function(chatClient) {
 
     MessagesRepository.addNewMessageFromClient(messageToStore);
     console.log('[chat-socket] mensagem enviada');
+  });
+
+  chatClient.on('getContactMessages', async function(data) {
+    const { contactId } = data;
+    if (!contactId) return;
+    const messages = await MessagesRepository.getMessagesByContactId(contactId);
+    chatClient.emit('getContactMessages', {
+      contactId,
+      messages
+    });
   });
 
   chatClient.on('saveContact', async function(data) {
