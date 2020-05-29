@@ -26,6 +26,7 @@ function MessagesRepository() {
         rethinkDb
           .table('messages')
           .filter({ contactId })
+          .orderBy('time')
           .run(global.connection)
           .then(cursor => cursor.toArray((error, messages) => { 
             if (error) { 

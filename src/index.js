@@ -139,7 +139,9 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
         contactId
       });
     }
-    MessagesRepository.addNewMessageFromWhatsApp(remoteJid, message);
+    MessagesRepository.addNewMessageFromWhatsApp(remoteJid, {
+      ...message, time: new Date()
+    });
   }
 
   whatsAppWeb.handlers.onReceiveContacts = async contacts => {
@@ -230,7 +232,7 @@ chatSocket.on('connection', function(chatClient) {
       userId: user.id,
       contactId, 
       chatId,
-      time: message.time, 
+      time: new Date(), 
       ...messageSent
     };
 
