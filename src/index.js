@@ -55,7 +55,7 @@ const chatSocket = io.of('chat');
 
 const sharedSessions = new SharedSession();
 
-qrcodeSocket.on('connection', function(qrcodeClient) {
+qrcodeSocket.on('connection', async function(qrcodeClient) {
   const { user } = qrcodeClient.request;
   if (!user) {
     console.log('[qrcode-socket] user not provided');
@@ -68,8 +68,9 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   }
 
   const sessionExists = sharedSessions.sessionExists(user.id);
-
-  if (sessionExists) {
+  const qrcodeIsConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
+  if (sessionExists && qrcodeIsConnected) {
+    console.log('[qrcode-socket] qrcode alredy connected', qrcodeIsConnected);
     console.log('[qrcode-socket] session alredy exists');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
     return;
@@ -90,18 +91,11 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
       const { authInfo } = qrcode;
       whatsAppWeb.login(authInfo);
       console.log('[qrcode-socket] qrcode connected successfuly');
+      qrcodeSocket.emit('qrcodeStatusConnection', true);
+      
       return qrcode;
     })
     .catch(console.error);
-
-  // qrcodeClient.on('import-contacts', function(contacts) {
-  //   const contactsWithValidJid = contacts.map(contact => ({
-  //     ...contact,
-  //     jid: contact.jid.replace('@c.us', '@s.whatsapp.net')
-  //   }));
-
-  //   ContactsRepository.addContacts(contactsWithValidJid);
-  // });
 
   whatsAppWeb.handlers.onConnected = () => {
     // get all the auth info we need to restore this session
@@ -146,20 +140,6 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     });
   }
 
-  whatsAppWeb.handlers.onReceiveContacts = async contacts => {
-    const contactsWithPicture = await Promise.all(
-      contacts.map(async contact => {
-        const result = await whatsAppWeb.query(['query', 'ProfilePicThumb', contact.jid]);
-        if (!result.eurl) return contact;
-        const { eurl } = result;
-        return {
-          ...contact,
-          eurl
-        }
-    }));
-    qrcodeClient.emit('adm-contacts', contactsWithPicture);
-  }
-
   whatsAppWeb.handlers.onGenerateQrcode = qr => {
     qrcodeClient.emit('qrcode', qr);
   }
@@ -167,8 +147,12 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
   whatsAppWeb.handlers.onError = (err) => {
     console.error(err);
   }
-  whatsAppWeb.handlers.onDisconnect = () => { 
+
+  whatsAppWeb.handlers.onDisconnect = async () => { 
     console.log('[qrcode-socket] whatsapp disconnected');
+    sharedSessions.removeSession(user.id);
+    qrcodeClient.disconnect();
+    QrcodeRepository.removeByOwnerId(user.id);
   }
 });
 
@@ -191,6 +175,14 @@ chatSocket.on('connection', function(chatClient) {
     console.log('[chat-socket] no active owner session');
     return;
   }
+
+  const qrcodeIsConnected = QrcodeRepository.getQrcodeStatusByOwnerId(user.ownerId);
+
+  if (!qrcodeIsConnected) {
+    console.log('[chat-socket] qrcode not found');
+    return;
+  }
+
   const whatsAppWeb = sharedSessions.getSession(ownerId);
 
   chatClient.join(user.id);
@@ -206,11 +198,9 @@ chatSocket.on('connection', function(chatClient) {
   
   ContactsRepository.getContactsByUserId(user.id)
     .then(contacts => {
-      console.log('[chat-socket] contacts', contacts);
       chatClient.emit('contacts', contacts);
       ChatsRepository.getChatsByUserId(user.id)
       .then(chats => {
-        console.log('[chat-socket] chats', chats);
         chatClient.emit('chats', chats)
       });
     });
