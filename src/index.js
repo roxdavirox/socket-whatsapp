@@ -71,6 +71,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
 
   if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
+    qrcodeSocket.emit('qrcodeStatusConnection', true);
     return;
   }
 
@@ -109,6 +110,7 @@ qrcodeSocket.on('connection', function(qrcodeClient) {
     console.log('[qrcode-socket] authInfo', authInfo);
     QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
     console.log('[qrcode-socket] qrcode auth info stored successfuly');
+    qrcodeSocket.emit('qrcodeStatusConnection', true);
   }
 
   whatsAppWeb.onNewMessage = async message => {
