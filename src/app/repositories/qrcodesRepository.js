@@ -20,6 +20,18 @@ function QrcodesRepository() {
       })
     },
 
+    async removeByOwnerId(ownerId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb
+          .table('qrcodes')
+          .filter({ ownerId })
+          .delete()
+          .run(global.connection)
+          .then(resolve)
+          .catch(reject);
+      })
+    },
+
     async updateQrcodeById(qrcodeId, updatedData) {
       return new Promise((resolve, reject) => {
         if (!qrcodeId || !updatedData) {
@@ -34,14 +46,10 @@ function QrcodesRepository() {
       })
     },
 
-    getQrcodeStatusByOwnerId(ownerId) {
-      let qrcodeIsConnected = false;
-      this.getAuthQrcodeInfoByOwnerId(ownerId)
-        .then(qrcode => {
-          qrcodeIsConnected = qrcode && qrcode.isConnected;
-        });
-        
-      return qrcodeIsConnected;
+    async getQrcodeStatusByOwnerId(ownerId) {
+      const qrcode = await this.getAuthQrcodeInfoByOwnerId(ownerId);
+      if (!qrcode) return false;
+      return qrcode.isConnected;
     },
 
     async storeQrcodeAuthInfo(authInfo, ownerId) {
