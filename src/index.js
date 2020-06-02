@@ -68,11 +68,8 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   }
 
   const sessionExists = sharedSessions.sessionExists(user.id);
-  const qrcodeIsConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
-  if (sessionExists && qrcodeIsConnected) {
-    console.log('[qrcode-socket] qrcode alredy connected', qrcodeIsConnected);
+  if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
-    qrcodeSocket.emit('qrcodeStatusConnection', true);
     return;
   }
 
@@ -91,7 +88,6 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
       const { authInfo } = qrcode;
       whatsAppWeb.login(authInfo);
       console.log('[qrcode-socket] qrcode connected successfuly');
-      qrcodeSocket.emit('qrcodeStatusConnection', true);
       
       return qrcode;
     })
@@ -145,9 +141,8 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   }
 
   whatsAppWeb.handlers.onError = (err) => {
-    console.error(err);
+    console.error('[whatsapp] error: ', err);
     QrcodeRepository.removeByOwnerId(user.id);
-    whatsAppWeb.close();
     qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
   }
@@ -188,8 +183,6 @@ chatSocket.on('connection', function(chatClient) {
     return;
   }
 
-  const whatsAppWeb = sharedSessions.getSession(ownerId);
-
   chatClient.join(user.id);
   chatClient.on('disconnect', function () {
     console.log('client disconnect...', chatClient.id)
@@ -217,10 +210,11 @@ chatSocket.on('connection', function(chatClient) {
     });
   // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
   chatClient.on('message', (message) => {
+    const whatsAppWeb = sharedSessions.getSession(ownerId);
+    if (!whatsAppWeb) return;
     // envia mensagem do front para o whatsapp
     console.log('[chat-socket] new message', message);
-    const { text, jid, contactId, chatId } = message;
-    if (!whatsAppWeb) return;
+    const { text, jid, contactId, chatId } = message;   
 
     const messageSent = whatsAppWeb.sendTextMessage(jid, text);
 
