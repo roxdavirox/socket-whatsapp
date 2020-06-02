@@ -68,14 +68,20 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   }
 
   const sessionExists = sharedSessions.sessionExists(user.id);
-  if (sessionExists) {
+  const qrcodeConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
+
+  if (sessionExists && qrcodeConnected) {
     console.log('[qrcode-socket] session alredy exists');
-    qrcodeClient.emit('qrcodeStatusConnection', true);
+    qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
     return;
   }
 
+  if (sessionExists) {
+    sharedSessions.removeSession(user.id);
+  }
+
   let whatsAppWeb = sharedSessions.createSession(new WhatsAppWeb(), user.id);
-  
+
   console.log('[qrcode-socket] new connection');
 
   QrcodeRepository
