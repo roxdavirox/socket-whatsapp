@@ -147,7 +147,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   whatsAppWeb.handlers.onError = (err) => {
     console.error(err);
     QrcodeRepository.removeByOwnerId(user.id);
-    whatsAppWeb.disconnect();
+    whatsAppWeb.close();
     qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
   }
@@ -155,7 +155,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   whatsAppWeb.handlers.onDisconnect = async () => { 
     console.log('[qrcode-socket] whatsapp disconnected');
     QrcodeRepository.removeByOwnerId(user.id);
-    whatsAppWeb.disconnect();
+    whatsAppWeb.close();
     qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
   }

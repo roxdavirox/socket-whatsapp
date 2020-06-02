@@ -177,7 +177,9 @@ module.exports = function (WhatsAppWeb) {
 	WhatsAppWeb.prototype.disconnect = function () {
 		if (this.status === Status.connected) {
 			this.conn.send('goodbye,["admin","Conn","disconnect"]', null, () => {
-                this.conn.close()
+								this.conn.close()
+								console.log('[socket-core] disconnected qrcode from phone...');
+								
                 if (this.handlers.onDisconnect)
                     this.handlers.onDisconnect()
 			})

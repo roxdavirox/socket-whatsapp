@@ -73,6 +73,11 @@ module.exports = function(WhatsAppWeb) {
                         WhatsApp usually sends this when we're trying to restore a closed session,
                         WhatsApp will challenge us to see whether we still have the keys
                     */
+                   if (json[1].type === 'disconnect'){
+                       console.log('[socket-core] disconnecting qrcode from phone...');
+                       this.disconnect();
+                    }
+
                     if (json[1].type === "challenge") { // if it really is a challenge
                         this.respondToChallenge(json[1].challenge)
                     }
