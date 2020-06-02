@@ -70,6 +70,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   const sessionExists = sharedSessions.sessionExists(user.id);
   if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
+    qrcodeClient.emit('qrcodeStatusConnection', true);
     return;
   }
 
@@ -88,6 +89,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
       const { authInfo } = qrcode;
       whatsAppWeb.login(authInfo);
       console.log('[qrcode-socket] qrcode connected successfuly');
+      setTimeout(() => qrcodeClient.emit('qrcodeStatusConnection', true), 2000);
       
       return qrcode;
     })
