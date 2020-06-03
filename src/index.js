@@ -73,6 +73,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
     console.log('[qrcode-socket] session alredy exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
     if (qrcodeConnected) return;
+    sharedSessions.getSession(user.id).close();
     sharedSessions.removeSession(user.id);
   }
 
