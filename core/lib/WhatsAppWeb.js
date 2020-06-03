@@ -61,7 +61,7 @@ class WhatsAppWeb {
 	}
 	// called when established a connection to the WhatsApp servers successfully
 	didConnectSuccessfully () {
-		console.log("connected successfully")
+		console.log("[core] connected successfully!");
 
 		this.status = WhatsAppWeb.Status.connected // update our status
 		this.lastSeen = new Date() // set last seen to right now

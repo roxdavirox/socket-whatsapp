@@ -29,7 +29,7 @@ module.exports = function (WhatsAppWeb) {
 	}
 	// once a connection has been successfully established
     WhatsAppWeb.prototype.onConnect = function () {
-        console.log("connected to WhatsApp Web")
+        console.log("[core] connected to WhatsApp Web");
 
         this.status = Status.creatingNewConnection
         if (!this.authInfo) { // if no auth info is present, that is, a new session has to be established
@@ -49,8 +49,8 @@ module.exports = function (WhatsAppWeb) {
 			encKey: Buffer.from( authInfo.encKey, 'base64' ),
 			macKey: Buffer.from( authInfo.macKey, 'base64' )
 		}
-
-        this.connect()
+		console.log('[core-session] restoring previously session and connecting');
+    this.connect();
 	}
 	// once the QR code is scanned and we can validate our connection,
 	// or we resolved the challenge when logging back in
@@ -123,7 +123,7 @@ module.exports = function (WhatsAppWeb) {
 		const signed = Utils.hmacSign(bytes, this.authInfo.macKey).toString('base64') // sign the challenge string with our macKey
 		const data = ["admin", "challenge", signed, this.authInfo.serverToken, this.authInfo.clientID] // prepare to send this signed string with the serverToken & clientID
 
-		console.log( "resolving challenge" )
+		console.log("[core-session] resolving challenge...");
 
 		this.sendJSON( data )
 	}
@@ -138,7 +138,7 @@ module.exports = function (WhatsAppWeb) {
 
 		let str = ref + "," + publicKeyStr + "," + this.authInfo.clientID
 		
-		console.log("authenticating... Converting to QR: " + str)
+		console.log("[core-session] authenticating... Converting to QR: " + str)
 
 		QR.generate(str, {small: true})
 		this.handlers.onGenerateQrcode(str);
@@ -152,7 +152,7 @@ module.exports = function (WhatsAppWeb) {
 				could be that the network is down, or the phone got disconnected or unpaired
 			*/
 			if (diff > 25+10) {
-				console.log("disconnected")
+				console.log("[core-session] disconnected from keep Alive request");
 				
 				this.close()
 				if (this.handlers.onDisconnect)
@@ -178,7 +178,7 @@ module.exports = function (WhatsAppWeb) {
 		if (this.status === Status.connected) {
 			this.conn.send('goodbye,["admin","Conn","disconnect"]', null, () => {
 								this.conn.close()
-								console.log('[socket-core] disconnected qrcode from phone...');
+								console.log('[core-session] disconnected qrcode from phone...');
 								
                 if (this.handlers.onDisconnect)
                     this.handlers.onDisconnect()

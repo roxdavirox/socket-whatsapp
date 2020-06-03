@@ -65,7 +65,7 @@ module.exports = function(WhatsAppWeb) {
                         whether we're starting a new session or are logging back in.
                         Sometimes, we also recieve it when one opens their phone
                      */
-                    console.log('#VALIDATE NEW CONNECTION');
+                    console.log('[core-recv] Validating new connection');
                     this.validateNewConnection(json[1])
                     return
                 case "Cmd":
@@ -74,7 +74,7 @@ module.exports = function(WhatsAppWeb) {
                         WhatsApp will challenge us to see whether we still have the keys
                     */
                    if (json[1].type === 'disconnect'){
-                       console.log('[socket-core] disconnecting qrcode from phone...');
+                       console.log('[core-recv] disconnecting qrcode from phone...');
                        this.disconnect();
                     }
 

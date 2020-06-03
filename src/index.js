@@ -39,8 +39,7 @@ io.use(jwtAuth.authenticate({
   algorithm: 'HS256'        // optional, default to be HS256
 }, function(payload, done) {
   // done is a callback, you can use it as follows
-  console.log('[auth-socket] checking token');
-  console.log('[qrcode-socket] payload', payload);
+  console.log('[auth-socket] checking token...');
   const { user } = payload;
   if (!user) {
     console.log('[qrcode-socket] user not found at token');
@@ -70,13 +69,10 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
   const sessionExists = sharedSessions.sessionExists(user.id);
   const qrcodeConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
 
-  if (sessionExists && qrcodeConnected) {
+  if (sessionExists) {
     console.log('[qrcode-socket] session alredy exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
-    return;
-  }
-
-  if (sessionExists) {
+    if (qrcodeConnected) return;
     sharedSessions.removeSession(user.id);
   }
 
@@ -103,11 +99,13 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
 
   whatsAppWeb.handlers.onConnected = () => {
     // get all the auth info we need to restore this session
-    const authInfo = whatsAppWeb.base64EncodedAuthInfo() 
-    console.log('[qrcode-socket] storing qrcode auth info');
-    console.log('[qrcode-socket] authInfo', authInfo);
-    QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
-    console.log('[qrcode-socket] qrcode auth info stored successfuly');
+    const authInfo = whatsAppWeb.base64EncodedAuthInfo();
+    if (!qrcodeConnected) {
+      console.log('[qrcode-socket] storing qrcode auth info');
+      QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
+      console.log('[qrcode-socket] qrcode auth info stored successfuly');
+    }
+    console.log('[qrcode-socket] whatsapp onConnected event');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
   }
 
@@ -159,8 +157,8 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
     console.log('[qrcode-socket] whatsapp disconnected');
     QrcodeRepository.removeByOwnerId(user.id);
     whatsAppWeb.close();
-    qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
+    qrcodeClient.disconnect();
   }
 });
 
@@ -193,7 +191,7 @@ chatSocket.on('connection', function(chatClient) {
 
   chatClient.join(user.id);
   chatClient.on('disconnect', function () {
-    console.log('client disconnect...', chatClient.id)
+    console.log('[socket-chat] client disconnect...', chatClient.id);
     chatClient.disconnect();
   });
 
