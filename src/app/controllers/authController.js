@@ -39,7 +39,7 @@ module.exports = ({ app }) => {
   const authenticateUser = async (req, res) => {
     try {
       const { email, password } = req.body;
-      console.log('email', email);
+      console.log('[controller-auth] autenticando email', email);
       const user = await userRepository.getUserByEmail(email);
   
       if (!user) { 
@@ -55,7 +55,7 @@ module.exports = ({ app }) => {
           .status(400)
           .send({ error: 'Invalid password ', auth: false});
       }
-  
+      console.log('[controller-auth] autenticado com sucesso!');
       user.password = undefined;
   
       return res.send({
