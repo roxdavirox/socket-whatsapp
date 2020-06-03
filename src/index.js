@@ -73,7 +73,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
     console.log('[qrcode-socket] session alredy exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
     if (qrcodeConnected) return;
-    sharedSessions.getSession(user.id).disconnect();
+    sharedSessions.getSession(user.id).close();
     sharedSessions.removeSession(user.id);
   }
 
@@ -156,15 +156,16 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
 
   whatsAppWeb.handlers.onDisconnect = async () => { 
     console.log('[qrcode-socket] whatsapp disconnected');
+    qrcodeSocket.emit('qrcodeStatusConnection', false);
     QrcodeRepository.removeByOwnerId(user.id);
-    whatsAppWeb.disconnect();
+    whatsAppWeb.close();
     sharedSessions.removeSession(user.id);
     qrcodeClient.disconnect();
   }
 });
 
 chatSocket.on('connection', function(chatClient) {
-  console.log('[qrcode-socket] new connection');
+  console.log('[chat-socket] novo chat conectado');
   const { user } = chatClient.request;
 
   if (!user) {
