@@ -189,6 +189,7 @@ module.exports = function (WhatsAppWeb) {
 	}
 	// close the connection
 	WhatsAppWeb.prototype.close = function () {
+		if (!this.conn) return;
 		this.conn.close()
 		this.conn = null
         this.status = Status.notConnected
