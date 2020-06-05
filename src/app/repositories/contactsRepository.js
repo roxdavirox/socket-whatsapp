@@ -113,9 +113,9 @@ function ContactsRepository() {
       return contact.jid === remoteJid;
     },
 
-    async updateByContactId(contactId, userId) {
+    async updateByContactId(contactId, newData) {
       return new Promise((resolve, reject) => {
-        if (!contactId || !userId) {
+        if (!newData) {
           console.log('data undefined');
           reject('data undefined');
           return;
@@ -124,7 +124,7 @@ function ContactsRepository() {
         rethinkDb
           .table('contacts')
           .get(contactId)
-          .update({ userId })
+          .update(newData)
           .run(global.connection)
           .then(() => resolve(true));
 

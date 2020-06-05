@@ -72,10 +72,10 @@ function ChatsRepository() {
       })
     },
 
-    async updateByContactId(contactId, userId) {
+    async updateByContactId(contactId, newData) {
       return new Promise((resolve, reject) => {
-        if (!contactId || !userId) {
-          console.log('data undefined');
+        if (!newData) {
+          console.log('updateByContactId newData undefined');
           reject('data undefined');
           return;
         }
@@ -83,7 +83,7 @@ function ChatsRepository() {
         rethinkDb
           .table('chats')
           .filter({ contactId })
-          .update({ userId })
+          .update(newData)
           .run(global.connection)
           .then(() => resolve(true));
         
