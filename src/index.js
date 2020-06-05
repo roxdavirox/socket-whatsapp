@@ -116,6 +116,7 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
     const isStatus = message.key.remoteJid.includes('status');
     if(message.key.remoteJid && (isStatus || isGroup)) return;
     console.log('nova mensagem do whatsapp:', message);
+    const time = new Date();
 
     const { remoteJid } = message.key;
     const contactExists = await ContactsRepository.contactExistsByJid(remoteJid);
@@ -135,11 +136,15 @@ qrcodeSocket.on('connection', async function(qrcodeClient) {
       const chatId = await ChatsRepository.addChat({
         userId: user.id,
         ownerId: user.id,
-        contactId
+        contactId,
+        lastMessageTime: time
       });
     }
+    const contact = await ContactsRepository.getContactByRemoteJid(remoteJid);
+    if (!contact) return;
+    ChatsRepository.updateByContactId(contact.id, { lastMessageTime: time });
     MessagesRepository.addNewMessageFromWhatsApp(remoteJid, {
-      ...message, time: new Date()
+      ...message, time
     });
   }
 
@@ -216,25 +221,25 @@ chatSocket.on('connection', function(chatClient) {
       // console.log('[chat-socket] users to transfer', users);
       chatClient.emit('transferUsers', users);
     });
-  // se ja tem uma instancia do qrcode conectada pega apenas os dados do banco
+
   chatClient.on('message', (message) => {
+    // envia mensagem do front para o whatsapp
     const whatsAppWeb = sharedSessions.getSession(ownerId);
     if (!whatsAppWeb) return;
-    // envia mensagem do front para o whatsapp
     console.log('[chat-socket] new message', message);
     const { text, jid, contactId, chatId } = message;   
 
     const messageSent = whatsAppWeb.sendTextMessage(jid, text);
-
+    const time = new Date();
     const messageToStore = {
       ownerId,
       userId: user.id,
       contactId, 
       chatId,
-      time: new Date(), 
+      time, 
       ...messageSent
     };
-
+    ChatsRepository.updateByContactId(contactId, { lastMessageTime: time });
     MessagesRepository.addNewMessageFromClient(messageToStore);
     console.log('[chat-socket] mensagem enviada');
   });
@@ -267,9 +272,9 @@ chatSocket.on('connection', function(chatClient) {
 
     const { contactId, userId } = data;
 
-    await ContactsRepository.updateByContactId(contactId, userId);
+    await ContactsRepository.updateByContactId(contactId, { userId });
 
-    await ChatsRepository.updateByContactId(contactId, userId);
+    await ChatsRepository.updateByContactId(contactId, { userId });
     const chat = await ChatsRepository.getChatByContactId(contactId);
     const contactToTransfer = await ContactsRepository.getContactById(contactId);
     chatClient.to(userId).emit('transferContact', { contact: contactToTransfer, chat });
