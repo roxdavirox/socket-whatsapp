@@ -1,3 +1,6 @@
+/* eslint-disable no-shadow */
+/* eslint-disable eqeqeq */
+/* eslint-disable no-plusplus */
 /* eslint-disable consistent-return */
 /* eslint-disable no-param-reassign */
 /* eslint-disable func-names */
@@ -107,6 +110,7 @@ module.exports = function (WhatsAppWeb) {
           */
           if (!json[1]) { // if json[1] is null
             // set json to the first element in json[2]; it contains the relevant part
+            // eslint-disable-next-line prefer-destructuring
             json = json[2][0];
 
             if (json[0] === 'read') { // if one marked a chat as read or unread on the phone
@@ -129,10 +133,12 @@ module.exports = function (WhatsAppWeb) {
               the sender and us
             */
 
+            // eslint-disable-next-line prefer-destructuring
             json = json[2]; // json[2] is the relevant part
             /* reverse for loop, because messages are sent ordered by most recent
               I can order them by recency if I add them in reverse order */
             for (let k = json.length - 1; k >= 0; k--) {
+              // eslint-disable-next-line no-shadow
               const message = json[k];
               const id = message[2].key.remoteJid;
               if (!this.chats[id]) { // if we haven't added this ID before, add them now
@@ -311,10 +317,10 @@ module.exports = function (WhatsAppWeb) {
     */
     const type = this.getMessageType(message);
     if (!type) {
-      return Promise.reject('unknown message type');
+      return Promise.reject(new Error('unknown message type'));
     }
     if (type === WhatsAppWeb.MessageType.extendedText || type === WhatsAppWeb.MessageType.text) {
-      return Promise.reject('cannot decode text message');
+      return Promise.reject(new Error('cannot decode text message'));
     }
 
     message = message[type];
@@ -347,7 +353,7 @@ module.exports = function (WhatsAppWeb) {
         message.fileName = randomFileName;
         return message;
       }
-      throw 'HMAC sign does not match';
+      throw new Error('HMAC sign does not match');
     });
     return p;
   };

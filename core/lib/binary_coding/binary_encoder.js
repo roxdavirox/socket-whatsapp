@@ -1,3 +1,14 @@
+/* eslint-disable valid-typeof */
+/* eslint-disable no-param-reassign */
+/* eslint-disable prefer-spread */
+/* eslint-disable no-array-constructor */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-case-declarations */
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-throw-literal */
+/* eslint-disable no-plusplus */
+/* eslint-disable no-bitwise */
+/* eslint-disable max-classes-per-file */
 const ProtoBuf = require('protobufjs');
 
 const WATags = {

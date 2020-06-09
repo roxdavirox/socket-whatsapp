@@ -1,6 +1,8 @@
+/* eslint-disable no-undef */
 module.exports = {
-  "extends": "airbnb-base",
+  extends: 'airbnb-base',
   rules: {
-    "linebreak-style": 0
+    'linebreak-style': 0,
   },
-}
+  allowIndentationTabs: true,
+};
