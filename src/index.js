@@ -114,6 +114,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     if (message.key.fromMe || !message.key) return;
     const isGroup = message.key.remoteJid.includes('-');
     const isStatus = message.key.remoteJid.includes('status');
+    // eslint-disable-next-line no-prototype-builtins
     const isImage = message.message.hasOwnProperty('imageMessage');
     if (isImage) {
       console.log('[qrcode-socket] Imagem recebida');
