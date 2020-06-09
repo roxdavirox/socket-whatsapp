@@ -9,7 +9,7 @@ function UsersRepository() {
           if (error) {
             reject(`user not found error: ${error}`);
             return false;
-          };
+          }
           const [user] = users;
           if (!user) {
             resolve(false);
@@ -21,8 +21,8 @@ function UsersRepository() {
           .table('users')
           .filter({ email })
           .run(global.connection)
-          .then(cursor => cursor.toArray(getFirstUser));
-      })
+          .then((cursor) => cursor.toArray(getFirstUser));
+      });
     },
 
     async getUsersByOwnerId(ownerId) {
@@ -33,7 +33,7 @@ function UsersRepository() {
             reject(error);
             return false;
           }
-          
+
           if (!users) {
             console.log('users undefined');
             resolve(false);
@@ -45,10 +45,10 @@ function UsersRepository() {
         rethinkDb.table('users')
           .filter({ ownerId })
           .run(global.connection)
-          .then(cursor => cursor.toArray(getAll));
+          .then((cursor) => cursor.toArray(getAll));
       });
     },
-  }
+  };
 }
 
 module.exports = UsersRepository();

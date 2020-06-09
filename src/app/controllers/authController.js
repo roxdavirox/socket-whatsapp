@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../../config.json');
 const authMiddleware = require('../middlewares/auth');
 const userRepository = require('../repositories/usersRepository');
+
 const router = express.Router();
 
 const createToken = (params = {}) => jwt.sign(params, config.jwt.secret, {
@@ -41,23 +42,23 @@ module.exports = ({ app }) => {
       const { email, password } = req.body;
       console.log('[controller-auth] autenticando email', email);
       const user = await userRepository.getUserByEmail(email);
-  
-      if (!user) { 
+
+      if (!user) {
         return res
           .status(400)
           .send({ error: 'User not found', auth: false });
-        }
-  
+      }
+
       // usar bcrypt
       // if (!await bcrypt.compare(password, user.password)) {
-      if(user.password !== password) {
+      if (user.password !== password) {
         return res
           .status(400)
-          .send({ error: 'Invalid password ', auth: false});
+          .send({ error: 'Invalid password ', auth: false });
       }
       console.log('[controller-auth] autenticado com sucesso!');
       user.password = undefined;
-  
+
       return res.send({
         user,
         auth: true,
@@ -76,10 +77,10 @@ module.exports = ({ app }) => {
 
     return res
       .status(200)
-      .send({ 
+      .send({
         user: token.user,
-        token: newToken ,
-        auth: true
+        token: newToken,
+        auth: true,
       });
   }
 

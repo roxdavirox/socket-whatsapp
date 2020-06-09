@@ -2,7 +2,7 @@ const BinaryCoding = require('./binary_coding/binary_encoder.js')
 
 class WhatsAppWeb {
 
-	static version = [0,4,1296] // the version of WhatsApp Web we're telling the servers we are
+	static version = [0, 4, 1296] // the version of WhatsApp Web we're telling the servers we are
 	static browserDescriptions = ["Baileys", "Baileys"]
 
 	static Status = {
@@ -12,7 +12,7 @@ class WhatsAppWeb {
 		loggingIn: 4,
 		connected: 5
 	}
-	
+
 	// set of statuses visible to other people; see updatePresence() in WhatsAppWeb.Send
 	static Presence = {
 		available: "available", // "online"
@@ -52,7 +52,7 @@ class WhatsAppWeb {
 		this.status = WhatsAppWeb.Status.notConnected
 	}
 	// error is a json array: [errorCode, "error description", optionalDescription]
-	gotError (error) {
+	gotError(error) {
 		this.handlers.onError(error) // tell the handler, we got an error
 	}
 
@@ -60,7 +60,7 @@ class WhatsAppWeb {
 		return this.userMetaData;
 	}
 	// called when established a connection to the WhatsApp servers successfully
-	didConnectSuccessfully () {
+	didConnectSuccessfully() {
 		console.log("[core] connected successfully!");
 
 		this.status = WhatsAppWeb.Status.connected // update our status
@@ -76,7 +76,7 @@ class WhatsAppWeb {
 	}
 	// base 64 encode the authentication credentials and return them, these can then be saved used to login again
 	// see login () in WhatsAppWeb.Session
-	base64EncodedAuthInfo () {
+	base64EncodedAuthInfo() {
 		return {
 			clientID: this.authInfo.clientID,
 			serverToken: this.authInfo.serverToken,

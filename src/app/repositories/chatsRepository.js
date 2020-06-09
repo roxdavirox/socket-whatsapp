@@ -7,9 +7,9 @@ function ChatsRepository() {
         rethinkDb.table('chats')
           .filter({ userId })
           .run(global.connection)
-          .then(cursor => {
+          .then((cursor) => {
             cursor.toArray((err, chats) => {
-              if(err) reject(err);
+              if (err) reject(err);
               resolve(chats);
             });
           });
@@ -21,11 +21,11 @@ function ChatsRepository() {
         rethinkDb.table('chats')
           .filter({ userId })
           .run(global.connection)
-          .then(cursor => {
+          .then((cursor) => {
             cursor.toArray((err, chats) => {
-              if(err) reject(err);
+              if (err) reject(err);
               const [chat] = chats;
-              if(!chat) reject('chat não encontrado');
+              if (!chat) reject('chat não encontrado');
               resolve(chat);
             });
           });
@@ -38,11 +38,11 @@ function ChatsRepository() {
           .table('chats')
           .filter({ contactId })
           .run(global.connection)
-          .then(cursor => {
+          .then((cursor) => {
             cursor.toArray((err, chats) => {
-              if(err) reject(err);
+              if (err) reject(err);
               const [chat] = chats;
-              if(!chat) reject('chat não encontrado');
+              if (!chat) reject('chat não encontrado');
               resolve(chat);
             });
           });
@@ -52,24 +52,24 @@ function ChatsRepository() {
     async addChat(chat = {}) {
       return new Promise((resolve, reject) => {
         if (!chat) {
-          reject("chat is undefined");
+          reject('chat is undefined');
           return;
         }
-  
+
         rethinkDb
           .table('chats')
           .insert(chat)
           .run(global.connection)
-          .then(res => {
+          .then((res) => {
             if (res.inserted > 0) {
               const { generated_keys } = res;
               const [chatId] = generated_keys;
               resolve(chatId);
               return;
             }
-            reject("chat not inserted");
+            reject('chat not inserted');
           });
-      })
+      });
     },
 
     async updateByContactId(contactId, newData) {
@@ -86,11 +86,10 @@ function ChatsRepository() {
           .update(newData)
           .run(global.connection)
           .then(() => resolve(true));
-        
       });
-    }
+    },
 
-  }
+  };
 }
 
 module.exports = ChatsRepository();

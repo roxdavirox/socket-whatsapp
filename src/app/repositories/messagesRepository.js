@@ -6,12 +6,12 @@ const ChatsRepository = require('./chatsRepository');
 function MessagesRepository() {
   return {
     async waitForMessage(userId, cb) {
-      const sendEachMessage = cursor => {
+      const sendEachMessage = (cursor) => {
         cursor.each((error, msg) => {
           const newValue = msg.new_val;
           cb(newValue);
         });
-      }
+      };
 
       return rethinkDb
         .table('messages')
@@ -28,8 +28,8 @@ function MessagesRepository() {
           .filter({ contactId })
           .orderBy('time')
           .run(global.connection)
-          .then(cursor => cursor.toArray((error, messages) => { 
-            if (error) { 
+          .then((cursor) => cursor.toArray((error, messages) => {
+            if (error) {
               reject('Error when get contact messages: ', error);
               return;
             }
@@ -42,18 +42,18 @@ function MessagesRepository() {
     async addNewMessageFromWhatsApp(remoteJid, message) {
       return new Promise(async (resolve, reject) => {
         const contact = await ContactsRepository.getContactByRemoteJid(remoteJid);
-        if (!contact) reject("Contact not found");
+        if (!contact) reject('Contact not found');
 
         const chat = await ChatsRepository.getChatByContactId(contact.id);
-        if (!chat) reject("Chat not found");;
-        
+        if (!chat) reject('Chat not found');
+
         const msg = {
           ownerId: contact.ownerId,
           contactId: contact.id,
           userId: contact.userId,
           chatId: chat.id,
           time: new Date(),
-          ...message
+          ...message,
         };
 
         rethinkDb.table('messages')
@@ -66,14 +66,14 @@ function MessagesRepository() {
 
     async addNewMessageFromClient(message) {
       return new Promise((resolve, reject) => {
-        if (!message) reject("no message provided");
+        if (!message) reject('no message provided');
         rethinkDb.table('messages')
           .insert(message)
           .run(global.connection);
         resolve(message);
-      })
-    }
-  }
+      });
+    },
+  };
 }
 
 module.exports = MessagesRepository();

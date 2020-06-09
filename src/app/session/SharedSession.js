@@ -23,7 +23,6 @@ class SharedSession {
     delete this.sessions[id];
     return session;
   }
-
 }
 
 module.exports = SharedSession;

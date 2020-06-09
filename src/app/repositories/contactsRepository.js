@@ -7,12 +7,12 @@ function ContactsRepository() {
         rethinkDb.table('contacts')
           .filter({ userId })
           .run(global.connection)
-          .then(cursor => {
+          .then((cursor) => {
             cursor.toArray((err, contacts) => {
-              if(err) reject(err);
+              if (err) reject(err);
               resolve(contacts);
             });
-        });
+          });
       });
     },
 
@@ -20,13 +20,13 @@ function ContactsRepository() {
       return new Promise((resolve, reject) => {
         if (!contactId) {
           console.log('undefined contactId');
-          reject(false)
+          reject(false);
         }
 
         rethinkDb.table('contacts')
           .get(contactId)
           .run(global.connection)
-          .then(contact => {
+          .then((contact) => {
             resolve(contact);
           });
       });
@@ -52,14 +52,14 @@ function ContactsRepository() {
         rethinkDb.table('contacts')
           .filter({ jid: remoteIjd })
           .run(global.connection)
-          .then(cursor => cursor.toArray(getFirst));
+          .then((cursor) => cursor.toArray(getFirst));
       });
     },
 
     async addContacts(contacts) {
       return new Promise((resolve, reject) => {
         if (!contacts) {
-          reject("contacts is undefined");
+          reject('contacts is undefined');
           return;
         }
 
@@ -67,7 +67,7 @@ function ContactsRepository() {
           .table('contacts')
           .insert(contacts)
           .run(global.connection);
-        
+
         resolve(contacts);
       });
     },
@@ -75,34 +75,34 @@ function ContactsRepository() {
     async addContact(contact = {}) {
       return new Promise((resolve, reject) => {
         if (!contact) {
-          reject("contact is undefined");
+          reject('contact is undefined');
           return;
         }
-  
+
         rethinkDb
           .table('contacts')
           .insert(contact)
           .run(global.connection)
-          .then(res => {
+          .then((res) => {
             if (res.inserted > 0) {
               const { generated_keys } = res;
               const [contactId] = generated_keys;
               resolve(contactId);
               return;
             }
-            reject("Contact not inserted");
+            reject('Contact not inserted');
           });
-      })
+      });
     },
 
     async contactExistsByJid(contactJid) {
       if (!contactJid) {
-        reject("jid not found");
+        reject('jid not found');
         return;
       }
 
-      const remoteJid = contactJid.includes('@s.whatsapp.net') 
-        ? contactJid 
+      const remoteJid = contactJid.includes('@s.whatsapp.net')
+        ? contactJid
         : `${contactJid}@s.whatsapp.net`;
 
       const contact = await this.getContactByRemoteJid(remoteJid);
@@ -127,7 +127,6 @@ function ContactsRepository() {
           .update(newData)
           .run(global.connection)
           .then(() => resolve(true));
-
       });
     },
 
@@ -145,10 +144,9 @@ function ContactsRepository() {
           .update({ name, short: name, notify: name })
           .run(global.connection)
           .then(() => resolve(true));
-
       });
-    }
-  }
+    },
+  };
 }
 
 module.exports = ContactsRepository();

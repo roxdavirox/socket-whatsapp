@@ -55,7 +55,7 @@ function QrcodesRepository() {
     async storeQrcodeAuthInfo(authInfo, ownerId) {
       return new Promise(async (resolve, reject) => {
         const qrcode = await this.getAuthQrcodeInfoByOwnerId(ownerId);
-        
+
         if (!qrcode) {
           const newQrcode = { authInfo, isConnected: true, ownerId };
           rethinkDb.table('qrcodes')

@@ -5,23 +5,23 @@ const config = require('../../config.json');
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) { 
+  if (!authHeader) {
     return res
       .status(401)
-      .send({ error: 'No token provided', auth: false }); 
+      .send({ error: 'No token provided', auth: false });
   }
 
   const schemeAndToken = authHeader.split(' ');
 
-  if (schemeAndToken.length !== 2) { 
+  if (schemeAndToken.length !== 2) {
     return res
       .status(401)
-      .send({ error: 'Token error', auth: false }); 
+      .send({ error: 'Token error', auth: false });
   }
 
   const [scheme, token] = schemeAndToken;
 
-  if (!scheme.includes('Bearer')) { 
+  if (!scheme.includes('Bearer')) {
     return res
       .status(401)
       .send({ error: 'Invalid token', auth: false });
