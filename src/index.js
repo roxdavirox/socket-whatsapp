@@ -115,12 +115,12 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const isGroup = message.key.remoteJid.includes('-');
     const isStatus = message.key.remoteJid.includes('status');
     // eslint-disable-next-line no-prototype-builtins
+    if (message.key.remoteJid && (isStatus || isGroup)) return;
     const isImage = message.message.hasOwnProperty('imageMessage');
     if (isImage) {
       console.log('[qrcode-socket] Imagem recebida');
-      whatsAppWeb.decodeMediaMessage(message, 'teste');
+      whatsAppWeb.decodeMediaMessage(message.message, 'teste');
     }
-    if (message.key.remoteJid && (isStatus || isGroup)) return;
     console.log('nova mensagem do whatsapp:', message);
     const time = new Date();
 
