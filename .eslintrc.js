@@ -4,5 +4,4 @@ module.exports = {
   rules: {
     'linebreak-style': 0,
   },
-  allowIndentationTabs: true,
 };

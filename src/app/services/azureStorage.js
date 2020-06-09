@@ -32,7 +32,8 @@ async function uploadFile(file, fileName, containerName) {
   console.log('[azure-service] autenticado com sucesso...');
   const pipeline = StorageURL.newPipeline(credentials);
   console.log('[azure-service] criando pipeline do azure blobs');
-  const serviceURL = new ServiceURL(`https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`, pipeline);
+  const accountUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`;
+  const serviceURL = new ServiceURL(accountUrl, pipeline);
   console.log('[azure-service] iniciando serviços azure blob');
   const aborter = Aborter.timeout(30 * ONE_MINUTE);
 
