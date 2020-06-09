@@ -12,7 +12,7 @@ const io = require('socket.io')(server);
 
 const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
-const WhatsAppWeb = require('../core/lib/WhatsAppWeb');
+const WhatsAppWeb = require('./app/core/lib/WhatsAppWeb');
 const SharedSession = require('./app/session/SharedSession');
 const ContactsRepository = require('./app/repositories/contactsRepository');
 const ChatsRepository = require('./app/repositories/chatsRepository');

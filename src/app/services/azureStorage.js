@@ -1,6 +1,10 @@
 /* eslint-disable no-return-await */
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-console */
+const azureBlob = require('@azure/storage-blob');
+
+const streamifier = require('streamifier');
+
 const {
   Aborter,
   BlockBlobURL,
@@ -9,9 +13,7 @@ const {
   SharedKeyCredential,
   StorageURL,
   uploadStreamToBlockBlob,
-} = require('@azure/storage-blob');
-
-const streamifier = require('streamifier');
+} = azureBlob;
 
 const STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const ACCOUNT_ACCESS_KEY = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;

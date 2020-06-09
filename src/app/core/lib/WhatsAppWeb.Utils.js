@@ -6,8 +6,9 @@ const HKDF = require('futoin-hkdf');
 const sharp = require('sharp');
 const VideoThumb = require('video-thumb');
 const fs = require('fs');
-const uuid = require('uuid/v1');
-
+// const guid = require('guid');
+// const { v1: uuid } = require('uuid');
+const uuid = () => `${new Date()}`;
 /*
     Basic cryptographic utilities to interact with WhatsApp servers
 */
