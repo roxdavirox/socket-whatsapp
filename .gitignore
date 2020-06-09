@@ -4,3 +4,4 @@ test_pvt.js
 media_decode_tests.js
 *.mp4
 .vscode
+.env
