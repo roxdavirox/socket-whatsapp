@@ -10,6 +10,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 const jwtAuth = require('socketio-jwt-auth');
 const config = require('./config.json');
 const WhatsAppWeb = require('./app/core/lib/WhatsAppWeb');
@@ -19,6 +23,7 @@ const ChatsRepository = require('./app/repositories/chatsRepository');
 const MessagesRepository = require('./app/repositories/messagesRepository');
 const QrcodeRepository = require('./app/repositories/qrcodesRepository');
 const UsersRepository = require('./app/repositories/usersRepository');
+
 
 global.connection = null;
 const dbContext = require('./app/data');
