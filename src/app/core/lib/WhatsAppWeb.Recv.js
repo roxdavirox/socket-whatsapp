@@ -119,7 +119,8 @@ module.exports = function (WhatsAppWeb) {
                 this.chats[id].user.count = 1; // up the read count
                 // send notification to the handler about the unread message
                 this.clearUnreadMessages(id);
-              } else { // if it was marked read
+              } else if (this.chats[id]) {
+                // if it was marked read
                 this.chats[id].user.count = 0; // set the read count to zero
               }
             }
