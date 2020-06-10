@@ -10,7 +10,7 @@ const HKDF = require('futoin-hkdf');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const Utils = require('./WhatsAppWeb.Utils');
-const azure = require('../../services/azureStorage').default;
+const azure = require('../../services/azureStorage');
 /*
   Contains the code for recieving messages and forwarding what to do with them to the correct
   functions
@@ -349,7 +349,7 @@ module.exports = function (WhatsAppWeb) {
         const fileNameAndExtension = `${fileName}.${getExtension(message.mimetype)}`;
         const randomFileName = Utils.getRandomFileName(fileNameAndExtension);
         // fs.writeFileSync(trueFileName, decryptedFile)
-        // azure.uploadImage(decryptedFile, randomFileName);
+        azure.uploadImage(decryptedFile, randomFileName);
         message.fileName = randomFileName;
         return message;
       }
