@@ -5,7 +5,7 @@ const BinaryCoding = require('./binary_coding/binary_encoder.js');
 class WhatsAppWeb {
 	static version = [0, 4, 1296] // the version of WhatsApp Web we're telling the servers we are
 
-	static browserDescriptions = ['Baileys', 'Baileys']
+	static browserDescriptions = ['Whatspipe', 'By FutureDev']
 
 	static Status = {
 	  notConnected: 0,
