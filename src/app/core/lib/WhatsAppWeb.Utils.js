@@ -119,10 +119,8 @@ module.exports = {
   // generate a random 10 byte ID to attach to a message
   generateMessageID() { return this.randomBytes(10).toString('hex').toUpperCase(); },
 
-  getRandomFileName(originalfilename) {
-    const [, ext] = originalfilename.split('.');
-    console.log('extension:', ext);
-    const newFileName = `${uuid()}.${ext}`;
-    return newFileName;
+  getRandomFileName(extension) {
+    const randomFileName = `${uuid()}.${extension}`;
+    return randomFileName;
   },
 };
