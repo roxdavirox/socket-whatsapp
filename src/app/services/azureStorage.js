@@ -10,7 +10,6 @@ const { BlobServiceClient, StorageSharedKeyCredential } = azureBlob;
 const ONE_MEGABYTE = 1024 * 1024;
 const FOUR_MEGABYTES = 4 * ONE_MEGABYTE;
 const MAX_CONCURRENCY = 20;
-const ONE_MINUTE = 60 * 1000;
 const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountAccessKey = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
 console.log('[azure-service] iniciando variaveis de ambiente');
@@ -29,11 +28,9 @@ async function uploadFile(file, fileName, containerName) {
   try {
     await block.uploadStream(stream, FOUR_MEGABYTES, MAX_CONCURRENCY);
     const url = `${azureUrl}/${containerName}/${fileName}`;
-    return { url };
+    return url;
   } catch (err) {
-    console.log(
-      `uploadStream failed, requestId - ${err.details.requestId}, statusCode - ${err.statusCode}, errorCode - ${err.details.errorCode}`,
-    );
+    console.log(err);
     return err;
   }
 }

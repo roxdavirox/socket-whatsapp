@@ -307,7 +307,7 @@ module.exports = function (WhatsAppWeb) {
 
   // decode a media message (video, image, document, audio)
   // & save it to the given file; returns a promise with metadata
-  WhatsAppWeb.prototype.decodeMediaMessage = function (message, fileName) {
+  WhatsAppWeb.prototype.decodeMediaMessage = function (message) {
     const getExtension = function (mimetype) {
       const str = mimetype.split(';')[0].split('/');
       return str[1];
@@ -333,7 +333,7 @@ module.exports = function (WhatsAppWeb) {
 
     // download the message
     let p = fetch(message.url).then((res) => res.buffer());
-    p = p.then((buffer) => {
+    p = p.then(async (buffer) => {
       // first part is actual file
       const file = buffer.slice(0, buffer.length - 10);
       // last 10 bytes is HMAC sign of file
@@ -347,11 +347,11 @@ module.exports = function (WhatsAppWeb) {
       if (sign.equals(mac)) {
         const decryptedFile = Utils.aesDecryptWithIV(file, cipherKey, iv); // decrypt media
 
-        const fileNameAndExtension = `${fileName}.${getExtension(message.mimetype)}`;
-        const randomFileName = Utils.getRandomFileName(fileNameAndExtension);
-        // fs.writeFileSync(trueFileName, decryptedFile)
-        azure.uploadImage(decryptedFile, randomFileName);
+        const fileExtension = getExtension(message.mimetype);
+        const randomFileName = Utils.getRandomFileName(fileExtension);
+        const url = await azure.uploadImage(decryptedFile, randomFileName);
         message.fileName = randomFileName;
+        message.imageUrl = url;
         return message;
       }
       throw new Error('HMAC sign does not match');
