@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -124,6 +125,11 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const isImage = message.message.hasOwnProperty('imageMessage');
     if (isImage) {
       console.log('[qrcode-socket] Imagem recebida');
+      await whatsAppWeb.decodeMediaMessage(message.message);
+    }
+    const isAudio = message.message.hasOwnProperty('audioMessage');
+    if (isAudio) {
+      console.log('[qrcode-socket] audio recebido');
       await whatsAppWeb.decodeMediaMessage(message.message);
     }
     console.log('nova mensagem do whatsapp:', message);

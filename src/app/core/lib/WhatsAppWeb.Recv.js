@@ -325,6 +325,11 @@ module.exports = function (WhatsAppWeb) {
     }
 
     message = message[type];
+    const containers = {
+      imageMessage: 'images',
+      audioMessage: 'audios',
+    };
+
     // get the keys to decrypt the message
     const mediaKeys = Utils.getMediaKeys(Buffer.from(message.mediaKey, 'base64'), type);
     const { iv } = mediaKeys;
@@ -349,9 +354,10 @@ module.exports = function (WhatsAppWeb) {
 
         const fileExtension = getExtension(message.mimetype);
         const randomFileName = Utils.getRandomFileName(fileExtension);
-        const url = await azure.uploadImage(decryptedFile, randomFileName);
+        const containerName = containers[type];
+        const url = await azure.uploadFile(decryptedFile, randomFileName, containerName);
         message.fileName = randomFileName;
-        message.imageUrl = url;
+        message.fileUrl = url;
         return message;
       }
       throw new Error('HMAC sign does not match');

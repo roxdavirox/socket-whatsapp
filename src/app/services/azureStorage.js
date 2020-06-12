@@ -37,4 +37,5 @@ async function uploadFile(file, fileName, containerName) {
 
 module.exports = {
   uploadImage,
+  uploadFile,
 };
