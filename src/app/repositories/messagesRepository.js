@@ -39,9 +39,9 @@ function MessagesRepository() {
       });
     },
 
-    async addNewMessageFromWhatsApp(remoteJid, contactId, message) {
+    async addNewMessageFromWhatsApp(remoteJid, ownerId, message) {
       return new Promise(async (resolve, reject) => {
-        const contact = await ContactsRepository.getContact(remoteJid, contactId);
+        const contact = await ContactsRepository.getContact(remoteJid, ownerId);
         if (!contact) reject('Contact not found');
 
         const chat = await ChatsRepository.getChatByContactId(contact.id);
