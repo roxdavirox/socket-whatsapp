@@ -5,8 +5,9 @@ const multer = require('multer');
 
 const { v1: uuid } = require('uuid');
 
+const MAX_FILE_SIZE = 1024 * 10;
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ storage, limits: { fileSize: MAX_FILE_SIZE } });
 const azure = require('../services/azureStorage');
 const ContactsRepository = require('../repositories/contactsRepository');
 const MessagesRepository = require('../repositories/messagesRepository');
