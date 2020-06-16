@@ -32,7 +32,7 @@ function ContactsRepository() {
       });
     },
 
-    async getContactBy(remoteIjd, ownerId) {
+    async getContact(remoteIjd, ownerId) {
       return new Promise((resolve, reject) => {
         const getFirst = (error, contacts) => {
           if (error) {
