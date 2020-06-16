@@ -4,6 +4,7 @@
 const azureBlob = require('@azure/storage-blob');
 
 const streamifier = require('streamifier');
+const { v1: uuid } = require('uuid');
 
 const { BlobServiceClient, StorageSharedKeyCredential } = azureBlob;
 
@@ -14,7 +15,7 @@ const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountAccessKey = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
 console.log('[azure-service] iniciando variaveis de ambiente');
 
-async function uploadImage(file, fileName) {
+async function uploadImage(file, fileName = uuid()) {
   return await uploadFile(file, fileName, 'images');
 }
 
