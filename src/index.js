@@ -34,10 +34,13 @@ dbContext.then((conn) => {
   console.log('[rethinkDb] - connected');
 });
 
+const sharedSessions = new SharedSession();
+
 // inject deps
 require('./app/controllers')({
   app,
   connection: global.connection,
+  sharedSessions,
 });
 
 io.use(jwtAuth.authenticate({
@@ -57,8 +60,6 @@ io.use(jwtAuth.authenticate({
 // TODO: separar os tipos de conexões
 const qrcodeSocket = io.of('qrcode');
 const chatSocket = io.of('chat');
-
-const sharedSessions = new SharedSession();
 
 qrcodeSocket.on('connection', async (qrcodeClient) => {
   const { user } = qrcodeClient.request;
