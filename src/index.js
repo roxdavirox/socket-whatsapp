@@ -162,7 +162,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const contact = await ContactsRepository.getContact(remoteJid, user.ownerId);
     if (!contact) return;
     ChatsRepository.updateByContactId(contact.id, { lastMessageTime: time });
-    MessagesRepository.addNewMessageFromWhatsApp(remoteJid, {
+    MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.id, {
       ...message, time,
     });
   };
