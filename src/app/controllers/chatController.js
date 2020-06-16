@@ -64,7 +64,12 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
-  router.post('/image', upload.single('image'), uploadImage);
+  function extendTimeout(req, res, next) {
+    res.setTimeout(480000, () => { console.log('[chat-controller] timeout upload'); });
+    next();
+  }
+
+  router.post('/image', extendTimeout, upload.single('image'), uploadImage);
 
   return app.use('/chat', router);
 };
