@@ -182,7 +182,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     console.log('[qrcode-socket] whatsapp disconnected');
     qrcodeSocket.emit('qrcodeStatusConnection', false);
     QrcodeRepository.removeByOwnerId(user.id);
-    whatsAppWeb.close();
+    // whatsAppWeb.close();
     // sharedSessions.removeSession(user.id);
     qrcodeClient.disconnect();
   };
