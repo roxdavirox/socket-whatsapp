@@ -32,7 +32,7 @@ function ContactsRepository() {
       });
     },
 
-    async getContactByRemoteJid(remoteIjd) {
+    async getContactBy(remoteIjd, ownerId) {
       return new Promise((resolve, reject) => {
         const getFirst = (error, contacts) => {
           if (error) {
@@ -50,7 +50,7 @@ function ContactsRepository() {
         };
 
         rethinkDb.table('contacts')
-          .filter({ jid: remoteIjd })
+          .filter({ jid: remoteIjd, ownerId })
           .run(global.connection)
           .then((cursor) => cursor.toArray(getFirst));
       });
@@ -95,20 +95,17 @@ function ContactsRepository() {
       });
     },
 
-    async contactExistsByJid(contactJid) {
+    async contactExists(contactJid, ownerId) {
       if (!contactJid) {
-        reject('jid not found');
-        return;
+        return false;
       }
 
       const remoteJid = contactJid.includes('@s.whatsapp.net')
         ? contactJid
         : `${contactJid}@s.whatsapp.net`;
 
-      const contact = await this.getContactByRemoteJid(remoteJid);
-      if (!contact) {
-        return false;
-      }
+      const contact = await this.getContactByRemoteJid(remoteJid, ownerId);
+      if (!contact) return false;
 
       return contact.jid === remoteJid;
     },
