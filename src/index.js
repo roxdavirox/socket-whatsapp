@@ -183,7 +183,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeSocket.emit('qrcodeStatusConnection', false);
     QrcodeRepository.removeByOwnerId(user.id);
     whatsAppWeb.close();
-    sharedSessions.removeSession(user.id);
+    // sharedSessions.removeSession(user.id);
     qrcodeClient.disconnect();
   };
 });
