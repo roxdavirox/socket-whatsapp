@@ -104,7 +104,7 @@ function ContactsRepository() {
         ? contactJid
         : `${contactJid}@s.whatsapp.net`;
 
-      const contact = await this.getContactByRemoteJid(remoteJid, ownerId);
+      const contact = await this.getContact(remoteJid, ownerId);
       if (!contact) return false;
 
       return contact.jid === remoteJid;
