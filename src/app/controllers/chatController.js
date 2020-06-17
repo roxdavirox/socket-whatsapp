@@ -5,9 +5,8 @@ const multer = require('multer');
 
 const { v1: uuid } = require('uuid');
 
-const MAX_FILE_SIZE = 1024 * 10;
 const storage = multer.memoryStorage();
-const upload = multer({ storage, limits: { fileSize: MAX_FILE_SIZE } });
+const upload = multer({ storage });
 const azure = require('../services/azureStorage');
 const ContactsRepository = require('../repositories/contactsRepository');
 const MessagesRepository = require('../repositories/messagesRepository');
@@ -64,12 +63,7 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
-  function extendTimeout(req, res, next) {
-    res.setTimeout(480000, () => { console.log('[chat-controller] timeout upload'); });
-    next();
-  }
-
-  router.post('/image', extendTimeout, upload.single('image'), uploadImage);
+  router.post('/image', upload.single('image'), uploadImage);
 
   return app.use('/chat', router);
 };
