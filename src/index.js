@@ -176,6 +176,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     console.error('[whatsapp] error: ', err);
     QrcodeRepository.removeByOwnerId(user.id);
     qrcodeClient.disconnect();
+    qrcodeClient.close();
     sharedSessions.removeSession(user.id);
   };
 
