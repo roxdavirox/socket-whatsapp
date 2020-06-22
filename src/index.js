@@ -249,7 +249,6 @@ chatSocket.on('connection', (chatClient) => {
     // eslint-disable-next-line no-undef
     if (!whatsAppWeb || !whatsAppWeb.conn) {
       console.log('[chat-socket] não há conexão com o whatsapp web');
-      qrcodeSocket.emit('qrcodeStatusConnection', false);
       QrcodeRepository.removeByOwnerId(user.id);
       // whatsAppWeb.close();
       sharedSessions.removeSession(user.id);
