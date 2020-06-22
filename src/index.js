@@ -246,7 +246,17 @@ chatSocket.on('connection', (chatClient) => {
   chatClient.on('message', (message) => {
     // envia mensagem do front para o whatsapp
     const whatsAppWeb = sharedSessions.getSession(ownerId);
-    if (!whatsAppWeb) return;
+    // eslint-disable-next-line no-undef
+    if (!whatsAppWeb || !whatsAppWeb.conn) {
+      console.log('[chat-socket] não há conexão com o whatsapp web');
+      qrcodeSocket.emit('qrcodeStatusConnection', false);
+      QrcodeRepository.removeByOwnerId(user.id);
+      // whatsAppWeb.close();
+      sharedSessions.removeSession(user.id);
+      console.log('[chat-socket] desconectado e sessão removida!');
+      chatClient.disconnect();
+      return;
+    }
     console.log('[chat-socket] new message', message);
     const {
       text, jid, contactId, chatId,
