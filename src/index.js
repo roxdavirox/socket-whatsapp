@@ -124,6 +124,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const isStatus = message.key.remoteJid.includes('status');
     // eslint-disable-next-line no-prototype-builtins
     if (message.key.remoteJid && (isStatus || isGroup)) return;
+    if (!message.message) return;
     const isImage = message.message.hasOwnProperty('imageMessage');
     if (isImage) {
       console.log('[qrcode-socket] Imagem recebida');
@@ -177,7 +178,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     QrcodeRepository.removeByOwnerId(user.id);
     // qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
-    qrcodeClient.close();
+    qrcodeClient.disconnect();
   };
 
   whatsAppWeb.handlers.onDisconnect = async () => {
