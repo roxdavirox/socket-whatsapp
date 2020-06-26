@@ -1,6 +1,14 @@
 const rethinkDb = require('rethinkdb');
 const config = require('../../config.json');
 
-const db = { ...config.rethinkdb, db: 'whats' };
+const user = process.env.RETHINK_DB_USER;
+const password = process.env.RETHINK_DB_PASSWORD;
 
-module.exports = rethinkDb.connect(db);
+const options = {
+  ...config.rethinkdb,
+  db: 'whats',
+  user,
+  password,
+};
+
+module.exports = rethinkDb.connect(options);

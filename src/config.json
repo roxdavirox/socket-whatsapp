@@ -1,6 +1,6 @@
 {
     "rethinkdb": {
-        "host": "173.17.0.2",
+        "host": "localhost",
         "port": 28015
     },
     "jwt": {
