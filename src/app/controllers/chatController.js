@@ -47,7 +47,7 @@ module.exports = ({ app, sharedSessions }) => {
           imageMessage: {
             ...messageSent.message.imageMessage,
             fileUrl: url,
-            caption: '',
+            caption: messageSent.message.caption || '',
           },
         },
       };
