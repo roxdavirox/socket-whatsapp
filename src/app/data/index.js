@@ -1,14 +1,21 @@
 const rethinkDb = require('rethinkdb');
+
+const fs = require('fs');
+
 const config = require('../../config.json');
 
-const user = process.env.RETHINK_DB_USER;
-const password = process.env.RETHINK_DB_PASSWORD;
+const authKey = process.env.RETHINK_DB_AUTH_KEY;
 
-const options = {
-  ...config.rethinkdb,
-  db: 'whats',
-  user,
-  password,
-};
+const cert = fs.readFileSync('./cacert.crt');
 
-module.exports = rethinkDb.connect(options);
+const { host, port, db } = config.rethinkdb;
+
+module.exports = rethinkDb.connect({
+  host,
+  port,
+  db,
+  authKey,
+  ssl: {
+    ca: cert,
+  },
+});

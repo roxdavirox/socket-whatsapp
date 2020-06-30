@@ -1,7 +1,8 @@
 {
     "rethinkdb": {
-        "host": "localhost",
-        "port": 28015
+        "host": "aws-us-east-1-portal.29.dblayer.com",
+        "port": 37037,
+        "db": "whats"
     },
     "jwt": {
         "secret": "5C8AE33A9A540E6EF57EEA753147AA2F"
