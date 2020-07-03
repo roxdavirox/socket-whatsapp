@@ -280,10 +280,12 @@ chatSocket.on('connection', (chatClient) => {
   chatClient.on('getContactMessages', async (data) => {
     const { contactId } = data;
     if (!contactId) return;
+    const messageCount = await MessagesRepository.getMessagesCountByContactId(contactId);
     const messages = await MessagesRepository.getMessagesByContactId(contactId);
     chatClient.emit('getContactMessages', {
       contactId,
       messages,
+      messageCount,
     });
   });
 
