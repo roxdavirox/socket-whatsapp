@@ -263,16 +263,14 @@ chatSocket.on('connection', (chatClient) => {
     } = message;
 
     const messageSent = whatsAppWeb.sendTextMessage(jid, text);
-    const time = new Date();
     const messageToStore = {
       ownerId,
       userId: user.id,
       contactId,
       chatId,
-      time,
       ...messageSent,
     };
-    ChatsRepository.updateByContactId(contactId, { lastMessageTime: time });
+    ChatsRepository.updateLastMessageByContactId(contactId);
     MessagesRepository.addNewMessageFromClient(messageToStore);
     console.log('[chat-socket] mensagem enviada');
   });

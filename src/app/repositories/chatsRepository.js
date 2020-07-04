@@ -89,6 +89,23 @@ function ChatsRepository() {
       });
     },
 
+    async updateLastMessageByContactId(contactId) {
+      return new Promise((resolve, reject) => {
+        if (!contactId) {
+          console.log('updateByContactId newData undefined');
+          reject(new Error('data undefined'));
+          return;
+        }
+
+        rethinkDb
+          .table('chats')
+          .filter({ contactId })
+          .update({ lastMessageTime: rethinkDb.now() })
+          .run(global.connection)
+          .then(() => resolve(true));
+      });
+    },
+
   };
 }
 

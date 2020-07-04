@@ -86,7 +86,6 @@ function MessagesRepository() {
           contactId: contact.id,
           userId: contact.userId,
           chatId: chat.id,
-          time: new Date(),
           createdAt: rethinkDb.now(),
           ...message,
         };
