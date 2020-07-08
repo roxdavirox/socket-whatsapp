@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-prototype-builtins */
 const express = require('express');
 const cors = require('cors');
@@ -154,16 +155,15 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
       const contactId = await ContactsRepository.addContact(contact);
 
       // eslint-disable-next-line no-unused-vars
-      const chatId = await ChatsRepository.addChat({
+      await ChatsRepository.addChat({
         userId: user.id,
         ownerId: user.id,
         contactId,
-        lastMessageTime: time,
       });
     }
     const contact = await ContactsRepository.getContact(remoteJid, user.ownerId);
     if (!contact) return;
-    ChatsRepository.updateByContactId(contact.id, { lastMessageTime: time });
+    ChatsRepository.updateLastMessageByContactId(contact.id);
     MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
       ...message, time,
     });
