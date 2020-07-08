@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const rethinkDb = require('rethinkdb');
 
 function ChatsRepository() {
@@ -52,13 +53,16 @@ function ChatsRepository() {
     async addChat(chat = {}) {
       return new Promise((resolve, reject) => {
         if (!chat) {
-          reject('chat is undefined');
+          reject(new Error('chat is undefined'));
           return;
         }
 
         rethinkDb
           .table('chats')
-          .insert(chat)
+          .insert({
+            ...chat,
+            lastMessageTime: rethinkDb.now(),
+          })
           .run(global.connection)
           .then((res) => {
             if (res.inserted > 0) {
@@ -67,7 +71,7 @@ function ChatsRepository() {
               resolve(chatId);
               return;
             }
-            reject('chat not inserted');
+            reject(new Error('chat not inserted'));
           });
       });
     },

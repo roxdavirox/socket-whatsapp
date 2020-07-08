@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const rethinkDb = require('rethinkdb');
 
 function ContactsRepository() {
@@ -75,7 +76,7 @@ function ContactsRepository() {
     async addContact(contact = {}) {
       return new Promise((resolve, reject) => {
         if (!contact) {
-          reject('contact is undefined');
+          reject(new Error('contact is undefined'));
           return;
         }
 
@@ -90,7 +91,7 @@ function ContactsRepository() {
               resolve(contactId);
               return;
             }
-            reject('Contact not inserted');
+            reject(new Error('Contact not inserted'));
           });
       });
     },
