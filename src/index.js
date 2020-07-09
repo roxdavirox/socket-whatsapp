@@ -231,7 +231,12 @@ chatSocket.on('connection', (chatClient) => {
     console.log(err);
   });
 
-  ContactsRepository.getContactsByUserId(user.id)
+  const { getContactsByUserId, getContactsByOwnerId } = ContactsRepository;
+  const getContacts = user.role === 'ADMIN'
+    ? getContactsByOwnerId
+    : getContactsByUserId;
+
+  getContacts(user.id)
     .then((contacts) => {
       chatClient.emit('contacts', contacts);
       ChatsRepository.getChatsByUserId(user.id)
@@ -277,18 +282,6 @@ chatSocket.on('connection', (chatClient) => {
     console.log('[chat-socket] mensagem enviada');
   });
 
-  chatClient.on('getContactMessages', async (data) => {
-    const { contactId } = data;
-    if (!contactId) return;
-    const messageCount = await MessagesRepository.getMessagesCountByContactId(contactId);
-    const messages = await MessagesRepository.getMessagesByContactId(contactId);
-    chatClient.emit('getContactMessages', {
-      contactId,
-      messages,
-      messageCount,
-    });
-  });
-
   chatClient.on('saveContact', async (data) => {
     if (!data.contactId || !data.name) {
       console.log('[chat-socket] save contact error');
@@ -310,6 +303,7 @@ chatSocket.on('connection', (chatClient) => {
     await ContactsRepository.updateByContactId(contactId, { userId });
 
     await ChatsRepository.updateByContactId(contactId, { userId });
+    await ChatsRepository.updateLastMessageByContactId(contactId);
     const chat = await ChatsRepository.getChatByContactId(contactId);
     const contactToTransfer = await ContactsRepository.getContactById(contactId);
     chatClient.to(userId).emit('transferContact', { contact: contactToTransfer, chat });

@@ -17,6 +17,20 @@ function ContactsRepository() {
       });
     },
 
+    getContactsByOwnerId(ownerId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb.table('contacts')
+          .filter({ ownerId })
+          .run(global.connection)
+          .then((cursor) => {
+            cursor.toArray((err, contacts) => {
+              if (err) reject(err);
+              resolve(contacts);
+            });
+          });
+      });
+    },
+
     async getContactById(contactId) {
       return new Promise((resolve, reject) => {
         if (!contactId) {
