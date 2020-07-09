@@ -15,7 +15,11 @@ function MessagesRepository() {
 
       return rethinkDb
         .table('messages')
-        .filter({ userId })
+        .filter(
+          rethinkDb
+            .row('userId')
+            .eq(userId),
+        )
         .changes()
         .run(global.connection)
         .then(sendEachMessage);

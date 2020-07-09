@@ -28,9 +28,9 @@ module.exports = ({ app, sharedSessions }) => {
         return res.status(400).send({ error: 'phone not exists on whatsapp' });
       }
 
-      const contactExist = await ContactsRepository.contactExists(phoneJid, ownerId);
+      const contactExists = await ContactsRepository.contactExists(phoneJid, ownerId);
 
-      if (contactExist) {
+      if (contactExists) {
         return res.status(400).send({ error: 'contact alredy exists' });
       }
 
@@ -67,7 +67,20 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
+  const finishContact = async (req, res) => {
+    try {
+      const { contactId, ownerId } = req.body;
+      await ContactsRepository.updateByContactId(contactId, { userId: ownerId, active: false });
+      return res.status(200).send({ finish: true });
+    } catch (e) {
+      return res
+        .status(400)
+        .send({ error: `${e}` });
+    }
+  };
+
   router.post('/', addNewContact);
+  router.post('/finish', finishContact);
 
   return app.use('/contact', router);
 };
