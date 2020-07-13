@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 /* eslint-disable no-console */
 /* eslint-disable no-prototype-builtins */
 const express = require('express');
@@ -244,18 +245,18 @@ chatSocket.on('connection', (chatClient) => {
   getContacts(user.id)
     .then(async (contacts) => {
       const whatsAppWeb = sharedSessions.getSession(ownerId);
-      const contactsWithPicture = await Promise.all(
-        contacts.map(async (contact) => {
-          if (!contact) return;
-          const [jid] = contact.jid.split('@');
-          const formatedJid = `${jid}@c.us`;
-          const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
-          if (!isOnWhatsapp) return;
-          const response = await whatsAppWeb.getProfilePicture(formatedJid);
-          if (response.status) return;
-          await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
-        }),
-      );
+      const mappedContacts = contacts.map(async (contact) => {
+        if (!contact) return;
+        const [jid] = contact.jid.split('@');
+        const formatedJid = `${jid}@c.us`;
+        const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
+        if (!isOnWhatsapp) return contact;
+        const response = await whatsAppWeb.getProfilePicture(formatedJid);
+        if (response.status) return contact;
+        // eslint-disable-next-line consistent-return
+        return { ...contact, eurl: response.eurl };
+      });
+      const contactsWithPicture = await Promise.all(mappedContacts);
       chatClient.emit('contacts', contactsWithPicture);
       ChatsRepository.getChatsByUserId(user.id)
         .then((chats) => {
