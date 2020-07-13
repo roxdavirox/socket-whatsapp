@@ -118,23 +118,6 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeSocket.emit('qrcodeStatusConnection', true);
   };
 
-  whatsAppWeb.handlers.onReceiveContacts = async (phoneContacts) => {
-    // atualizar a foto de perfil dos contatos
-    const contacts = await ContactsRepository.getContactsByOwnerId(user.id);
-    await Promise.all(
-      contacts.map(async (contact) => {
-        if (!contact) return;
-        const [jid] = contact.jid.split('@');
-        const formatedJid = `${jid}@c.us`;
-        const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
-        if (!isOnWhatsapp) return;
-        const response = await whatsAppWeb.getProfilePicture(formatedJid);
-        if (response.status) return;
-        await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
-      }),
-    );
-  };
-
   whatsAppWeb.handlers.onReceiveUserPhone = async (wid) => {
     const pictureResponse = await whatsAppWeb.getProfilePicture(wid);
     if (pictureResponse.status) return;
@@ -259,8 +242,21 @@ chatSocket.on('connection', (chatClient) => {
     : getContactsByUserId;
 
   getContacts(user.id)
-    .then((contacts) => {
-      chatClient.emit('contacts', contacts);
+    .then(async (contacts) => {
+      const whatsAppWeb = sharedSessions.getSession(ownerId);
+      const contactsWithPicture = await Promise.all(
+        contacts.map(async (contact) => {
+          if (!contact) return;
+          const [jid] = contact.jid.split('@');
+          const formatedJid = `${jid}@c.us`;
+          const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
+          if (!isOnWhatsapp) return;
+          const response = await whatsAppWeb.getProfilePicture(formatedJid);
+          if (response.status) return;
+          await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
+        }),
+      );
+      chatClient.emit('contacts', contactsWithPicture);
       ChatsRepository.getChatsByUserId(user.id)
         .then((chats) => {
           chatClient.emit('chats', chats);

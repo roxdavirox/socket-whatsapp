@@ -190,7 +190,7 @@ module.exports = function (WhatsAppWeb) {
 
             // console.log('contact users', contactUsers);
 
-            this.handlers.onReceiveContacts(contactUsers);
+            // this.handlers.onReceiveContacts(contactUsers);
           }
           return;
         case 'Presence':
