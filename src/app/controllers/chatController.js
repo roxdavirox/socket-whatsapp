@@ -12,8 +12,9 @@ const ContactsRepository = require('../repositories/contactsRepository');
 const MessagesRepository = require('../repositories/messagesRepository');
 const ChatsRepository = require('../repositories/chatsRepository');
 
-const extensionType = {
-  'image/jpeg': 'jpg',
+const getExtension = (file) => {
+  const [_, ext] = file.split('.');
+  return ext;
 };
 
 module.exports = ({ app, sharedSessions }) => {
@@ -29,7 +30,7 @@ module.exports = ({ app, sharedSessions }) => {
     const session = sharedSessions.getSession(ownerId);
     try {
       const contact = await ContactsRepository.getContactById(contactId);
-      const fileExtension = extensionType[file.mimetype];
+      const fileExtension = getExtension(file.originalname);
       const fileName = `${uuid()}.${fileExtension}`;
       const { buffer } = file;
       const url = await azure.uploadImage(buffer, fileName);
