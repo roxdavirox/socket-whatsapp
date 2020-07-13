@@ -27,7 +27,6 @@ const MessagesRepository = require('./app/repositories/messagesRepository');
 const QrcodeRepository = require('./app/repositories/qrcodesRepository');
 const UsersRepository = require('./app/repositories/usersRepository');
 
-
 global.connection = null;
 const dbContext = require('./app/data');
 
@@ -117,6 +116,24 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     }
     console.log('[qrcode-socket] whatsapp onConnected event');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
+  };
+
+  whatsAppWeb.handlers.onReceiveContacts = async (phoneContacts) => {
+    // atualizar a foto de perfil dos contatos
+    try {
+      const contacts = await ContactsRepository.getContactsByOwnerId(user.id);
+      await Promise.all(
+        contacts.forEach(async (contact) => {
+          const [jid] = contact.jid.split('@');
+          const formatedJid = `${jid}@c.us`;
+          const response = await whatsAppWeb.getProfilePicture(formatedJid);
+          if (response.status) return;
+          await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
+        }),
+      );
+    } catch (e) {
+      console.error('error on receive picture', e.message);
+    }
   };
 
   whatsAppWeb.onNewMessage = async (message) => {

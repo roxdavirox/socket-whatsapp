@@ -35,6 +35,10 @@ module.exports = function (WhatsAppWeb) {
     ];
     return this.query(json);
   };
+  // get profile picture
+  WhatsAppWeb.prototype.getProfilePicture = function (jid) {
+    return this.query(['query', 'ProfilePicThumb', jid]);
+  };
   // tell someone about your presence -- online, typing, offline etc.
   WhatsAppWeb.prototype.updatePresence = function (jid, type) {
     const json = [

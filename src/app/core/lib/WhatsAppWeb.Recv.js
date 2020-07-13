@@ -148,7 +148,6 @@ module.exports = function (WhatsAppWeb) {
               this.chats[id].messages.push(message[2]); // append this message to the array
             }
 
-
             const id = json[0][2].key.remoteJid; // get the ID whose chats we just processed
             this.clearUnreadMessages(id); // forward to the handler any any unread messages
           }
@@ -190,7 +189,7 @@ module.exports = function (WhatsAppWeb) {
 
             // console.log('contact users', contactUsers);
 
-            // this.handlers.onReceiveContacts(contactUsers);
+            this.handlers.onReceiveContacts(contactUsers);
           }
           return;
         case 'Presence':
