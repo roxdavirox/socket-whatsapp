@@ -120,20 +120,25 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
 
   whatsAppWeb.handlers.onReceiveContacts = async (phoneContacts) => {
     // atualizar a foto de perfil dos contatos
-    try {
-      const contacts = await ContactsRepository.getContactsByOwnerId(user.id);
-      await Promise.all(
-        contacts.forEach(async (contact) => {
-          const [jid] = contact.jid.split('@');
-          const formatedJid = `${jid}@c.us`;
-          const response = await whatsAppWeb.getProfilePicture(formatedJid);
-          if (response.status) return;
-          await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
-        }),
-      );
-    } catch (e) {
-      console.error('error on receive picture', e.message);
-    }
+    const contacts = await ContactsRepository.getContactsByOwnerId(user.id);
+    await Promise.all(
+      contacts.map(async (contact) => {
+        if (!contact) return;
+        const [jid] = contact.jid.split('@');
+        const formatedJid = `${jid}@c.us`;
+        const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
+        if (!isOnWhatsapp) return;
+        const response = await whatsAppWeb.getProfilePicture(formatedJid);
+        if (response.status) return;
+        await ContactsRepository.updateByContactId(contact.id, { eurl: response.eurl });
+      }),
+    );
+  };
+
+  whatsAppWeb.handlers.onReceiveUserPhone = async (wid) => {
+    const pictureResponse = await whatsAppWeb.getProfilePicture(wid);
+    if (pictureResponse.status) return;
+    await UsersRepository.updateUsersByOwnerId(user.ownerId, { eurl: pictureResponse.eurl });
   };
 
   whatsAppWeb.onNewMessage = async (message) => {

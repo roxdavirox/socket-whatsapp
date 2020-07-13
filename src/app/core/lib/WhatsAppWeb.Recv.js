@@ -88,6 +88,7 @@ module.exports = function (WhatsAppWeb) {
           */
           console.log('[core-recv] Validating new connection');
           this.validateNewConnection(json[1]);
+          this.handlers.onReceiveUserPhone(json[1].wid);
           return;
         case 'Cmd':
           /*

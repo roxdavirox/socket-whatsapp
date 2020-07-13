@@ -48,6 +48,22 @@ function UsersRepository() {
           .then((cursor) => cursor.toArray(getAll));
       });
     },
+
+    async updateUsersByOwnerId(ownerId, newData) {
+      return new Promise((resolve, reject) => {
+        if (!newData) {
+          reject(new Error('data undefined'));
+          return;
+        }
+
+        rethinkDb
+          .table('users')
+          .filter({ ownerId })
+          .update(newData)
+          .run(global.connection)
+          .then(() => resolve(true));
+      });
+    },
   };
 }
 
