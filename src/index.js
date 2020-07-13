@@ -249,10 +249,8 @@ chatSocket.on('connection', (chatClient) => {
         if (!contact) return;
         const [jid] = contact.jid.split('@');
         const formatedJid = `${jid}@c.us`;
-        const isOnWhatsapp = await whatsAppWeb.isOnWhatsApp(jid);
-        if (!isOnWhatsapp) return contact;
         const response = await whatsAppWeb.getProfilePicture(formatedJid);
-        if (response.status) return contact;
+        if (!response.eurl) return contact;
         // eslint-disable-next-line consistent-return
         return { ...contact, eurl: response.eurl };
       });
