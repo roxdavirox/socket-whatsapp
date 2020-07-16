@@ -296,6 +296,7 @@ chatSocket.on('connection', (chatClient) => {
     };
     ChatsRepository.updateLastMessageByContactId(contactId);
     MessagesRepository.addNewMessageFromClient(messageToStore);
+    ContactsRepository.updateByContactId(contactId, { active: true });
     console.log('[chat-socket] mensagem enviada');
   });
 
