@@ -42,6 +42,7 @@ module.exports = ({ app, sharedSessions }) => {
         phone: `${countryCode}${phone}`,
         short: name,
         userId,
+        active: true,
       };
 
       const contactId = await ContactsRepository.addContact(contact);
