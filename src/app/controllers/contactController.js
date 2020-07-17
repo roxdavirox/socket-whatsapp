@@ -70,7 +70,21 @@ module.exports = ({ app, sharedSessions }) => {
   const finishContact = async (req, res) => {
     try {
       const { contactId, ownerId } = req.body;
-      await ContactsRepository.updateByContactId(contactId, { userId: ownerId, active: false });
+      await ContactsRepository
+        .updateByContactId(
+          contactId, {
+            userId: ownerId,
+            active: false,
+          },
+        );
+
+      await ChatsRepository
+        .updateByContactId(
+          contactId, {
+            userId: ownerId,
+          },
+        );
+      // await ChatsRepository.updateLastMessageByContactId(contactId);
       return res.status(200).send({ finish: true });
     } catch (e) {
       return res
