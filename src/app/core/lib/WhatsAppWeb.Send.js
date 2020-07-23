@@ -154,6 +154,7 @@ module.exports = function (WhatsAppWeb) {
         const message = {};
         message[mediaType] = {
           caption: info.caption,
+          fileName: info.fileName,
           url,
           mediaKey: mediaKey.toString('base64'),
           mimetype: info.mimetype,
