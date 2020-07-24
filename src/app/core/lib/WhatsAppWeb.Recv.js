@@ -328,6 +328,7 @@ module.exports = function (WhatsAppWeb) {
     const containers = {
       imageMessage: 'images',
       audioMessage: 'audios',
+      documentMessage: 'files',
     };
 
     // get the keys to decrypt the message
@@ -353,7 +354,7 @@ module.exports = function (WhatsAppWeb) {
         const decryptedFile = Utils.aesDecryptWithIV(file, cipherKey, iv); // decrypt media
 
         const fileExtension = getExtension(message.mimetype);
-        const randomFileName = Utils.getRandomFileName(fileExtension);
+        const randomFileName = message.fileName || Utils.getRandomFileName(fileExtension);
         const containerName = containers[type];
         const url = await azure.uploadFile(decryptedFile, randomFileName, containerName);
         message.fileName = randomFileName;
