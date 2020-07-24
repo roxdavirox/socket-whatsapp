@@ -132,6 +132,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     // eslint-disable-next-line no-prototype-builtins
     if (message.key.remoteJid && (isStatus || isGroup)) return;
     if (!message.message) return;
+    // verificar como exibir um sticker
     const isImage = message.message.hasOwnProperty('imageMessage');
     if (isImage) {
       console.log('[qrcode-socket] Imagem recebida');
@@ -140,6 +141,11 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const isAudio = message.message.hasOwnProperty('audioMessage');
     if (isAudio) {
       console.log('[qrcode-socket] audio recebido');
+      await whatsAppWeb.decodeMediaMessage(message.message);
+    }
+    const isDocument = message.message.hasOwnProperty('documentMessage');
+    if (isDocument) {
+      console.log('[qrcode-socket] documento recebido');
       await whatsAppWeb.decodeMediaMessage(message.message);
     }
     console.log('nova mensagem do whatsapp:', message);
