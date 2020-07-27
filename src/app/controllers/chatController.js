@@ -17,6 +17,14 @@ const getExtension = (file) => {
   return ext;
 };
 
+const removeUndefinedFields = (obj) => {
+  Object.keys(obj).forEach((key) => {
+    if (obj[key] && typeof obj[key] === 'object') removeUndefinedFields(obj[key]);
+    else if (obj[key] === undefined) delete obj[key];
+  });
+  return obj;
+};
+
 module.exports = ({ app, sharedSessions }) => {
   const uploadImage = async (req, res) => {
     const {
@@ -37,7 +45,7 @@ module.exports = ({ app, sharedSessions }) => {
       const messageSent = await whatsapp.sendMediaMessage(contact.jid, buffer, 'imageMessage');
       const chat = await ChatsRepository.getChatByContactId(contact.id);
       const time = new Date();
-      const messageToStore = {
+      const messageToStore = removeUndefinedFields({
         ownerId,
         userId,
         contactId,
@@ -51,7 +59,7 @@ module.exports = ({ app, sharedSessions }) => {
             caption: messageSent.message.caption || '',
           },
         },
-      };
+      });
 
       ChatsRepository.updateByContactId(contactId, { lastMessageTime: time });
       MessagesRepository.addNewMessageFromClient(messageToStore);
@@ -94,7 +102,7 @@ module.exports = ({ app, sharedSessions }) => {
       const time = new Date();
 
       const { jpegThumbnail, ...documentMessage } = messageSent.message.documentMessage;
-      const messageToStore = {
+      const messageToStore = removeUndefinedFields({
         ownerId,
         userId,
         contactId,
@@ -108,7 +116,7 @@ module.exports = ({ app, sharedSessions }) => {
             caption: messageSent.message.caption || '',
           },
         },
-      };
+      });
 
       ChatsRepository.updateByContactId(contactId, { lastMessageTime: time });
       MessagesRepository.addNewMessageFromClient(messageToStore);
