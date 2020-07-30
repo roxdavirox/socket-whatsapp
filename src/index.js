@@ -31,12 +31,108 @@ const UsersRepository = require('./app/repositories/usersRepository');
 global.connection = null;
 const dbContext = require('./app/data');
 
+const sharedSessions = new SharedSession();
+
+function connectAllQrcodes() {
+  QrcodeRepository.getAllConnectedQrcodes()
+    .then((qrcodes) => {
+      qrcodes.forEach((qrcode) => {
+        console.log('[qrcode] connecting: ', qrcode.ownerId);
+        const whatsAppWeb = sharedSessions
+          .createSession(new WhatsAppWeb(), qrcode.ownerId);
+        const { authInfo } = qrcode;
+        whatsAppWeb.login(authInfo);
+
+        whatsAppWeb.handlers.onConnected = () => {
+        };
+
+        whatsAppWeb.handlers.onReceiveUserPhone = async (wid) => {
+          const pictureResponse = await whatsAppWeb.getProfilePicture(wid);
+          if (pictureResponse.status) return;
+          await UsersRepository.updateUsersByOwnerId(qrcode.ownerId, { eurl: pictureResponse.eurl });
+        };
+
+        whatsAppWeb.onNewMessage = async (message) => {
+          if (message.key.fromMe || !message.key) return;
+          const isGroup = message.key.remoteJid.includes('-');
+          const isStatus = message.key.remoteJid.includes('status');
+          // eslint-disable-next-line no-prototype-builtins
+          if (message.key.remoteJid && (isStatus || isGroup)) return;
+          if (!message.message) return;
+          // verificar como exibir um sticker
+          const isImage = message.message.hasOwnProperty('imageMessage');
+          if (isImage) {
+            console.log('[qrcode-socket] Imagem recebida');
+            await whatsAppWeb.decodeMediaMessage(message.message);
+          }
+          const isAudio = message.message.hasOwnProperty('audioMessage');
+          if (isAudio) {
+            console.log('[qrcode-socket] audio recebido');
+            await whatsAppWeb.decodeMediaMessage(message.message);
+          }
+          const isDocument = message.message.hasOwnProperty('documentMessage');
+          if (isDocument) {
+            console.log('[qrcode-socket] documento recebido');
+            await whatsAppWeb.decodeMediaMessage(message.message);
+          }
+          console.log('nova mensagem do whatsapp:', message);
+          const time = new Date();
+
+          const { remoteJid } = message.key;
+          const contactExists = await ContactsRepository.contactExists(remoteJid, qrcode.ownerId);
+
+          if (!contactExists) {
+            const phone = remoteJid.split('@')[0];
+            const contact = {
+              jid: remoteJid,
+              ownerId: qrcode.ownerId,
+              userId: qrcode.ownerId,
+              phone,
+              name: phone,
+              short: phone,
+              active: true,
+            };
+            const contactId = await ContactsRepository.addContact(contact);
+
+            // eslint-disable-next-line no-unused-vars
+            await ChatsRepository.addChat({
+              userId: qrcode.ownerId,
+              ownerId: qrcode.ownerId,
+              contactId,
+            });
+          }
+          const contact = await ContactsRepository.getContact(remoteJid, qrcode.ownerId);
+          if (!contact) return;
+          await ContactsRepository.updateByContactId(contact.id, { active: true });
+          ChatsRepository.updateLastMessageByContactId(contact.id);
+          MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
+            ...message, time,
+          });
+        };
+
+        whatsAppWeb.handlers.onGenerateQrcode = (qr) => {
+        };
+
+        whatsAppWeb.handlers.onError = (err) => {
+          console.error('[whatsapp] error: ', err);
+          QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+          // qrcodeClient.disconnect();
+          sharedSessions.removeSession(qrcode.ownerId);
+        };
+
+        whatsAppWeb.handlers.onDisconnect = async () => {
+          console.log('[qrcode-socket] whatsapp disconnected');
+          QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+        };
+      });
+    });
+}
+
 dbContext.then((conn) => {
   global.connection = conn;
   console.log('[rethinkDb] - connected');
+  connectAllQrcodes();
 });
-
-const sharedSessions = new SharedSession();
 
 // inject deps
 require('./app/controllers')({
