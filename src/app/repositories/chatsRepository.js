@@ -17,6 +17,20 @@ function ChatsRepository() {
       });
     },
 
+    getChatsByOwnerId(ownerId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb.table('chats')
+          .filter({ ownerId })
+          .run(global.connection)
+          .then((cursor) => {
+            cursor.toArray((err, chats) => {
+              if (err) reject(err);
+              resolve(chats);
+            });
+          });
+      });
+    },
+
     getChatByUserId(userId) {
       return new Promise((resolve, reject) => {
         rethinkDb.table('chats')

@@ -189,6 +189,8 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
 
   whatsAppWeb.handlers.onError = (err) => {
     console.error('[whatsapp] error: ', err);
+    qrcodeSocket.emit('qrcodeStatusConnection', false);
+
     QrcodeRepository.removeByOwnerId(user.id);
     // qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
@@ -222,6 +224,7 @@ chatSocket.on('connection', (chatClient) => {
   const hasActiveOwnerSession = sharedSessions.sessionExists(ownerId);
   if (!hasActiveOwnerSession) {
     console.log('[chat-socket] no active owner session');
+    // TODO: enviar para o client que o qrcode está desconectado no ADMIN
     return;
   }
 
@@ -248,6 +251,11 @@ chatSocket.on('connection', (chatClient) => {
     ? getContactsByOwnerId
     : getContactsByUserId;
 
+  const { getChatsByUserId, getChatsByOwnerId } = ChatsRepository;
+  const getChats = user.role === 'ADMIN'
+    ? getChatsByOwnerId
+    : getChatsByUserId;
+
   getContacts(user.id)
     .then(async (contacts) => {
       const whatsAppWeb = sharedSessions.getSession(ownerId);
@@ -262,10 +270,9 @@ chatSocket.on('connection', (chatClient) => {
       });
       const contactsWithPicture = await Promise.all(mappedContacts);
       chatClient.emit('contacts', contactsWithPicture);
-      ChatsRepository.getChatsByUserId(user.id)
-        .then((chats) => {
-          chatClient.emit('chats', chats);
-        });
+      getChats(user.id).then((chats) => {
+        chatClient.emit('chats', chats);
+      });
     });
 
   UsersRepository.getUsersByOwnerId(ownerId)
