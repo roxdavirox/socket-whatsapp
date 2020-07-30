@@ -16,8 +16,8 @@ function QrcodesRepository() {
           .table('qrcodes')
           .filter({ ownerId })
           .run(global.connection)
-          .then(cursor => cursor.toArray(getFirstQrcode));
-      })
+          .then((cursor) => cursor.toArray(getFirstQrcode));
+      });
     },
 
     async removeByOwnerId(ownerId) {
@@ -29,13 +29,13 @@ function QrcodesRepository() {
           .run(global.connection)
           .then(resolve)
           .catch(reject);
-      })
+      });
     },
 
     async updateQrcodeById(qrcodeId, updatedData) {
       return new Promise((resolve, reject) => {
         if (!qrcodeId || !updatedData) {
-          reject("invalid parameters");
+          reject('invalid parameters');
           return;
         }
         rethinkDb.table('qrcodes')
@@ -43,7 +43,7 @@ function QrcodesRepository() {
           .update(updatedData)
           .run(global.connection);
         resolve(updatedData);
-      })
+      });
     },
 
     async getQrcodeStatusByOwnerId(ownerId) {
@@ -67,9 +67,24 @@ function QrcodesRepository() {
 
         await this.updateQrcodeById(qrcode.id, { authInfo });
         resolve(qrcode);
-      })
-    }
-  }
+      });
+    },
+
+    async getAllConnectedQrcodes() {
+      return new Promise((resolve, reject) => {
+        rethinkDb.table('qrcodes')
+          .filter({ isConnected: true })
+          .run(global.connection)
+          .then((cursor) => {
+            cursor.toArray((err, qrcodes) => {
+              if (err) reject(err);
+              resolve(qrcodes);
+            });
+          })
+          .catch(reject);
+      });
+    },
+  };
 }
 
 module.exports = QrcodesRepository();
