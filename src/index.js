@@ -175,10 +175,15 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   const qrcodeConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
 
   if (sessionExists) {
-    console.log('[qrcode-socket] session alredy exists');
+    console.log('[qrcode-socket] session already exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
-    if (qrcodeConnected) return;
-    sharedSessions.getSession(user.id).close();
+    if (qrcodeConnected) {
+      qrcodeClient.disconnect();
+      return;
+    }
+
+    const whatsAppweb = sharedSessions.getSession(user.id);
+    whatsAppweb.close();
     sharedSessions.removeSession(user.id);
   }
 
@@ -209,7 +214,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     if (!qrcodeConnected) {
       console.log('[qrcode-socket] storing qrcode auth info');
       QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
-      console.log('[qrcode-socket] qrcode auth info stored successfuly');
+      console.log('[qrcode-socket] qrcode auth info stored successfully');
     }
     console.log('[qrcode-socket] whatsapp onConnected event');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
@@ -287,7 +292,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     console.error('[whatsapp] error: ', err);
     qrcodeSocket.emit('qrcodeStatusConnection', false);
 
-    QrcodeRepository.removeByOwnerId(user.id);
+    // QrcodeRepository.removeByOwnerId(user.id);
     // qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
     qrcodeClient.disconnect();
@@ -296,7 +301,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   whatsAppWeb.handlers.onDisconnect = async () => {
     console.log('[qrcode-socket] whatsapp disconnected');
     qrcodeSocket.emit('qrcodeStatusConnection', false);
-    QrcodeRepository.removeByOwnerId(user.id);
+    // QrcodeRepository.removeByOwnerId(user.id);
     // whatsAppWeb.close();
     // sharedSessions.removeSession(user.id);
     qrcodeClient.disconnect();
