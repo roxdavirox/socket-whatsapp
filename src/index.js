@@ -221,7 +221,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
       await QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
       console.log('[qrcode-socket] qrcode auth info stored successfully');
     } else {
-      console.log('[qrcode-socket] updating first qrcode auth info connection');
+      console.log('[qrcode-socket] updating qrcode auth info connection');
       await QrcodeRepository.updateAuthInfo(authInfo, user.id);
       console.log('[qrcode-socket] qrcode auth info updated successfully');
     }
