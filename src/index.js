@@ -124,6 +124,7 @@ function connectAllQrcodes() {
           console.log('[qrcode-socket] whatsapp disconnected');
           // QrcodeRepository.removeByOwnerId(qrcode.ownerId);
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
+          sharedSessions.removeSession(qrcode.ownerId);
         };
       });
     });
