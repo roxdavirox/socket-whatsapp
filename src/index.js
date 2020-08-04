@@ -210,14 +210,22 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     })
     .catch(console.error);
 
-  whatsAppWeb.handlers.onConnected = () => {
+  whatsAppWeb.handlers.onConnected = async () => {
     // get all the auth info we need to restore this session
     const authInfo = whatsAppWeb.base64EncodedAuthInfo();
-    if (!qrcodeConnected) {
-      console.log('[qrcode-socket] storing qrcode auth info');
-      QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
+    const qrcodeExists = await QrcodeRepository.qrcodeExists(user.id);
+
+    const isFirstQrcodeConnection = !qrcodeConnected && !qrcodeExists;
+    if (isFirstQrcodeConnection) {
+      console.log('[qrcode-socket] storing first qrcode auth info connection');
+      await QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
       console.log('[qrcode-socket] qrcode auth info stored successfully');
+    } else {
+      console.log('[qrcode-socket] updating first qrcode auth info connection');
+      await QrcodeRepository.updateAuthInfo(authInfo, user.id);
+      console.log('[qrcode-socket] qrcode auth info updated successfully');
     }
+
     console.log('[qrcode-socket] whatsapp onConnected event');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
   };
