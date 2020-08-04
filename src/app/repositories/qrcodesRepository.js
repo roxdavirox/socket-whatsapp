@@ -44,10 +44,33 @@ function QrcodesRepository() {
       });
     },
 
+    async updateAuthInfo(authInfo, ownerId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb
+          .table('qrcodes')
+          .filter({ ownerId })
+          .update({ isConnected: true, authInfo })
+          .run(global.connection)
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
+    async qrcodeExists(ownerId) {
+      if (!ownerId) {
+        return false;
+      }
+
+      const qrcode = await this.getAuthQrcodeInfoByOwnerId(ownerId);
+      if (!qrcode) return false;
+
+      return qrcode.ownerId === ownerId;
+    },
+
     async updateQrcodeById(qrcodeId, updatedData) {
       return new Promise((resolve, reject) => {
         if (!qrcodeId || !updatedData) {
-          reject('invalid parameters');
+          reject(new Error('invalid parameters'));
           return;
         }
         rethinkDb.table('qrcodes')
