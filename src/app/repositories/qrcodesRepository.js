@@ -32,6 +32,18 @@ function QrcodesRepository() {
       });
     },
 
+    async disconnectByOwnerId(ownerId) {
+      return new Promise((resolve, reject) => {
+        rethinkDb
+          .table('qrcodes')
+          .filter({ ownerId })
+          .update({ isConnected: false })
+          .run(global.connection)
+          .then(resolve)
+          .catch(reject);
+      });
+    },
+
     async updateQrcodeById(qrcodeId, updatedData) {
       return new Promise((resolve, reject) => {
         if (!qrcodeId || !updatedData) {
