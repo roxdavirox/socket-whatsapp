@@ -115,14 +115,15 @@ function connectAllQrcodes() {
 
         whatsAppWeb.handlers.onError = (err) => {
           console.error('[whatsapp] error: ', err);
-          QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+          // QrcodeRepository.removeByOwnerId(qrcode.ownerId);
           // qrcodeClient.disconnect();
           sharedSessions.removeSession(qrcode.ownerId);
         };
 
         whatsAppWeb.handlers.onDisconnect = async () => {
           console.log('[qrcode-socket] whatsapp disconnected');
-          QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+          // QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+          QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
         };
       });
     });
@@ -303,7 +304,8 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeSocket.emit('qrcodeStatusConnection', false);
     // QrcodeRepository.removeByOwnerId(user.id);
     // whatsAppWeb.close();
-    // sharedSessions.removeSession(user.id);
+    sharedSessions.removeSession(user.id);
+    QrcodeRepository.disconnectByOwnerId(user.id);
     qrcodeClient.disconnect();
   };
 });
