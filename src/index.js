@@ -104,7 +104,7 @@ function connectAllQrcodes() {
           const contact = await ContactsRepository.getContact(remoteJid, qrcode.ownerId);
           if (!contact) return;
           await ContactsRepository.updateByContactId(contact.id, { active: true });
-          ChatsRepository.updateLastMessageByContactId(contact.id);
+          ChatsRepository.updateLastTimeAndMessage(contact.id, message.key.id);
           MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
             ...message, time,
           });
@@ -243,22 +243,16 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     // eslint-disable-next-line no-prototype-builtins
     if (message.key.remoteJid && (isStatus || isGroup)) return;
     if (!message.message) return;
-    // verificar como exibir um sticker
+
     const isImage = message.message.hasOwnProperty('imageMessage');
-    if (isImage) {
-      console.log('[qrcode-socket] Imagem recebida');
-      await whatsAppWeb.decodeMediaMessage(message.message);
-    }
     const isAudio = message.message.hasOwnProperty('audioMessage');
-    if (isAudio) {
-      console.log('[qrcode-socket] audio recebido');
-      await whatsAppWeb.decodeMediaMessage(message.message);
-    }
     const isDocument = message.message.hasOwnProperty('documentMessage');
-    if (isDocument) {
-      console.log('[qrcode-socket] documento recebido');
+
+    if (isImage || isAudio || isDocument) {
+      console.log('[qrcode-socket] arquivo recebido');
       await whatsAppWeb.decodeMediaMessage(message.message);
     }
+
     console.log('nova mensagem do whatsapp:', message);
     const time = new Date();
 
@@ -288,7 +282,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const contact = await ContactsRepository.getContact(remoteJid, user.ownerId);
     if (!contact) return;
     await ContactsRepository.updateByContactId(contact.id, { active: true });
-    ChatsRepository.updateLastMessageByContactId(contact.id);
+    ChatsRepository.updateLastTimeAndMessage(contact.id, message.key.id);
     MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
       ...message, time,
     });
@@ -419,7 +413,7 @@ chatSocket.on('connection', (chatClient) => {
       chatId,
       ...messageSent,
     };
-    ChatsRepository.updateLastMessageByContactId(contactId);
+    ChatsRepository.updateLastTimeAndMessage(contactId, messageToStore.key.id);
     MessagesRepository.addNewMessageFromClient(messageToStore);
     ContactsRepository.updateByContactId(contactId, { active: true });
     console.log('[chat-socket] mensagem enviada');
