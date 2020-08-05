@@ -199,7 +199,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   QrcodeRepository
     .getAuthQrcodeInfoByOwnerId(user.id)
     .then((qrcode) => {
-      if (!qrcode) {
+      if (!qrcode || !qrcode.isConnected) {
         whatsAppWeb.connect(); // start a new session, with QR code scanning and what not
         console.log('[qrcode-socket] ready to scan QRCODE', qrcode);
         return qrcode;
