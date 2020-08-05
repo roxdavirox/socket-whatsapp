@@ -80,10 +80,10 @@ function MessagesRepository() {
     async addNewMessageFromWhatsApp(remoteJid, ownerId, message) {
       return new Promise(async (resolve, reject) => {
         const contact = await ContactsRepository.getContact(remoteJid, ownerId);
-        if (!contact) reject('Contact not found');
+        if (!contact) reject(new Error('Contact not found'));
 
         const chat = await ChatsRepository.getChatByContactId(contact.id);
-        if (!chat) reject('Chat not found');
+        if (!chat) reject(new Error('Chat not found'));
 
         const msg = {
           ownerId: contact.ownerId,
