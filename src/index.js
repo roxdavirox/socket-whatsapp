@@ -282,7 +282,10 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const contact = await ContactsRepository.getContact(remoteJid, user.ownerId);
     if (!contact) return;
     await ContactsRepository.updateByContactId(contact.id, { active: true });
-    ChatsRepository.updateLastTimeAndMessage(contact.id, message.key.id);
+    ChatsRepository.updateLastTimeAndMessage(
+      contact.id,
+      message.message.conversation || 'Nova mensagem',
+    );
     MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
       ...message, time,
     });
@@ -413,7 +416,10 @@ chatSocket.on('connection', (chatClient) => {
       chatId,
       ...messageSent,
     };
-    ChatsRepository.updateLastTimeAndMessage(contactId, messageToStore.key.id);
+    ChatsRepository.updateLastTimeAndMessage(
+      contactId,
+      messageToStore.message.conversation || 'Nova mensagem',
+    );
     MessagesRepository.addNewMessageFromClient(messageToStore);
     ContactsRepository.updateByContactId(contactId, { active: true });
     console.log('[chat-socket] mensagem enviada');

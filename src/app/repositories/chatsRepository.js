@@ -124,7 +124,7 @@ function ChatsRepository() {
       });
     },
 
-    async updateLastTimeAndMessage(contactId, lastMessageId) {
+    async updateLastTimeAndMessage(contactId, lastTextMessage) {
       return new Promise((resolve, reject) => {
         if (!contactId) {
           console.log('contactId undefined');
@@ -135,7 +135,7 @@ function ChatsRepository() {
         rethinkDb
           .table('chats')
           .filter({ contactId })
-          .update({ lastMessageTime: rethinkDb.now(), lastMessageId })
+          .update({ lastMessageTime: rethinkDb.now(), lastTextMessage })
           .run(global.connection)
           .then(() => resolve(true));
       });
