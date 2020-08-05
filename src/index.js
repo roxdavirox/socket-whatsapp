@@ -115,14 +115,12 @@ function connectAllQrcodes() {
 
         whatsAppWeb.handlers.onError = (err) => {
           console.error('[whatsapp] error: ', err);
-          // QrcodeRepository.removeByOwnerId(qrcode.ownerId);
-          // qrcodeClient.disconnect();
+          QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
 
         whatsAppWeb.handlers.onDisconnect = async () => {
           console.log('[qrcode-socket] whatsapp disconnected');
-          // QrcodeRepository.removeByOwnerId(qrcode.ownerId);
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
@@ -302,6 +300,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     // QrcodeRepository.removeByOwnerId(user.id);
     // qrcodeClient.disconnect();
     sharedSessions.removeSession(user.id);
+    QrcodeRepository.disconnectByOwnerId(user.id);
     qrcodeClient.disconnect();
   };
 
