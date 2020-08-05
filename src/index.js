@@ -104,7 +104,10 @@ function connectAllQrcodes() {
           const contact = await ContactsRepository.getContact(remoteJid, qrcode.ownerId);
           if (!contact) return;
           await ContactsRepository.updateByContactId(contact.id, { active: true });
-          ChatsRepository.updateLastTimeAndMessage(contact.id, message.key.id);
+          ChatsRepository.updateLastTimeAndMessage(
+            contact.id,
+            message.message.conversation || 'Nova mensagem',
+          );
           MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
             ...message, time,
           });
@@ -115,6 +118,8 @@ function connectAllQrcodes() {
 
         whatsAppWeb.handlers.onError = (err) => {
           console.error('[whatsapp] error: ', err);
+          const currentSession = sharedSessions.getSession(qrcode.ownerId);
+          currentSession.close();
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
@@ -296,9 +301,8 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   whatsAppWeb.handlers.onError = (err) => {
     console.error('[whatsapp] error: ', err);
     qrcodeSocket.emit('qrcodeStatusConnection', false);
-
-    // QrcodeRepository.removeByOwnerId(user.id);
-    // qrcodeClient.disconnect();
+    const currentSession = sharedSessions.getSession(user.id);
+    currentSession.close();
     sharedSessions.removeSession(user.id);
     QrcodeRepository.disconnectByOwnerId(user.id);
     qrcodeClient.disconnect();
