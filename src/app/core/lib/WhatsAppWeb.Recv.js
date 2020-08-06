@@ -96,8 +96,9 @@ module.exports = function (WhatsAppWeb) {
             WhatsApp will challenge us to see whether we still have the keys
           */
           if (json[1].type === 'disconnect') {
-            console.log('[core-recv] disconnecting qrcode from phone...');
-            this.disconnect();
+            console.log('[core-recv] disconnecting qrcode ...');
+            const isFromPhone = json[1].kind !== 'replaced' || json[1].kind === undefined;
+            this.disconnect(isFromPhone);
           }
 
           if (json[1].type === 'challenge') { // if it really is a challenge

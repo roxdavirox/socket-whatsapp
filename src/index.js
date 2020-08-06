@@ -135,6 +135,14 @@ function connectAllQrcodes() {
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
+
+        whatsAppWeb.handlers.onDisconnectFromPhone = async () => {
+          console.log('[qrcode-socket-setup] onDisconnectFromPhone');
+          QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
+          QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+
+          sharedSessions.removeSession(qrcode.ownerId);
+        };
       });
     });
 }
@@ -317,12 +325,14 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
       sharedSessions.removeSession(user.id);
     }
     QrcodeRepository.disconnectByOwnerId(user.id);
-    qrcodeClient.disconnect();
     if (statusError == 401) {
       console.log('[error] removendo qrcode do banco de dados');
       // removendo o qrcode ele força próxima vez gerar o qrcode
       QrcodeRepository.removeByOwnerId(user.id);
+      // envia status de erro para o front atualizar o qrcode container
+      qrcodeSocket.emit('status-error', statusError);
     }
+    qrcodeClient.disconnect();
   };
 
   whatsAppWeb.handlers.onDisconnect = async () => {
@@ -332,6 +342,17 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     // whatsAppWeb.close();
     sharedSessions.removeSession(user.id);
     QrcodeRepository.disconnectByOwnerId(user.id);
+    qrcodeClient.disconnect();
+  };
+
+  whatsAppWeb.handlers.onDisconnectFromPhone = async () => {
+    console.log('[qrcode-socket] onDisconnectFromPhone');
+    qrcodeSocket.emit('qrcodeStatusConnection', false);
+    // whatsAppWeb.close();
+    sharedSessions.removeSession(user.id);
+    QrcodeRepository.disconnectByOwnerId(user.id);
+    // remove pq foi feito pela pessoa - torna token invalido
+    QrcodeRepository.removeByOwnerId(user.id);
     qrcodeClient.disconnect();
   };
 });
