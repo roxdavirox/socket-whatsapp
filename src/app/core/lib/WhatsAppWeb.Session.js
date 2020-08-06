@@ -184,6 +184,7 @@ module.exports = function (WhatsAppWeb) {
         this.close();
 
         if (this.handlers.onDisconnectFromPhone && fromPhone) this.handlers.onDisconnectFromPhone();
+        if (this.handlers.onDisconnect && !fromPhone) this.handlers.onDisconnect();
       });
     } else if (this.conn) {
       this.close();
