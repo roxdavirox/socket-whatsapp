@@ -9,8 +9,14 @@ class SharedSession {
   }
 
   getSession(id) {
-    if (!this.sessionExists(id)) return;
-    return this.sessions[id];
+    return this.sessions[id] || false;
+  }
+
+  getSessions() {
+    if (!this.sessions) return;
+    // eslint-disable-next-line consistent-return
+    return Object
+      .values(this.sessions);
   }
 
   sessionExists(id) {
@@ -19,9 +25,12 @@ class SharedSession {
 
   removeSession(id) {
     if (!this.sessionExists(id)) return;
-    const session = this.sessions[id];
     delete this.sessions[id];
-    return session;
+  }
+
+  removeSessions() {
+    const sessionsIds = Object.keys(this.sessions);
+    sessionsIds.forEach((id) => this.removeSession(id));
   }
 }
 
