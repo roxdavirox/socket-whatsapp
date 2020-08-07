@@ -182,11 +182,13 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   const { user } = qrcodeClient.request;
   if (!user) {
     console.log('[qrcode-socket] user not provided');
+    qrcodeSocket.disconnect();
     return;
   }
 
   if (user.role !== 'ADMIN') {
     console.log('[qrcode-socket] user is not ADM role');
+    qrcodeSocket.disconnect();
     return;
   }
 
@@ -372,10 +374,11 @@ chatSocket.on('connection', (chatClient) => {
 
   if (!hasActiveOwnerSession) {
     console.log('[chat-socket] no active owner session');
-    // TODO: enviar para o client que o qrcode está desconectado no ADMIN
+    chatClient.disconnect();
     return;
   }
-  const whatsappSession = sharedSessions.getSession(user.id);
+
+  const whatsappSession = sharedSessions.getSession(ownerId);
 
   const isNotConnected = whatsappSession.status !== 5;
   if (isNotConnected) {
