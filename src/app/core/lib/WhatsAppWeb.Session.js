@@ -20,7 +20,10 @@ module.exports = function (WhatsAppWeb) {
     this.conn = new WebSocket('wss://web.whatsapp.com/ws', { origin: 'https://web.whatsapp.com' });
 
     this.conn.on('open', () => this.onConnect());
-    this.conn.on('message', (m) => this.onMessageRecieved(m)); // in WhatsAppWeb.Recv.js
+    this.conn.on('message', (m) => {
+      console.log('[whatsapp <-]', m);
+      this.onMessageRecieved(m);
+    }); // in WhatsAppWeb.Recv.js
     this.conn.on('error', (error) => { // if there was an error in the WebSocket
       this.close();
       this.gotError([20, error]);

@@ -229,6 +229,8 @@ module.exports = function (WhatsAppWeb) {
   };
   // send a JSON message to WhatsApp servers
   WhatsAppWeb.prototype.sendJSON = function (json) {
+    console.log('[whatsapp ->]', json);
+
     const str = JSON.stringify(json);
     const tag = Utils.generateMessageTag();
     // console.log('tag', tag);
