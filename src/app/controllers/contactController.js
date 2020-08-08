@@ -1,6 +1,4 @@
 const express = require('express');
-// TODO: add aut middleware
-const authMiddleware = require('../middlewares/auth');
 
 const router = express.Router();
 const ContactsRepository = require('../repositories/contactsRepository');
@@ -94,8 +92,44 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
+  const getProfilePicture = async (req, res) => {
+    try {
+      const { jid, contactId, ownerId } = req.body;
+
+      const sessionExists = sharedSessions.sessionExists(ownerId);
+
+      if (!sessionExists) {
+        return res.status(400).send({ error: 'sessão não existe' });
+      }
+
+      const whatsappSession = sharedSessions.getSession(ownerId);
+
+      if (whatsappSession.status !== 5) {
+        return res.status(400).send({ error: 'sessão não está conectada' });
+      }
+
+      const [contactJid] = jid.split('@');
+      const formatedJid = `${contactJid}@c.us`;
+      const response = await whatsappSession.getProfilePicture(formatedJid);
+
+      const { eurl } = response;
+      await ContactsRepository
+        .updateByContactId(
+          contactId,
+          { eurl },
+        );
+
+      return res.status(200).send({ eurl });
+    } catch (e) {
+      return res
+        .status(400)
+        .send({ error: `${e}` });
+    }
+  };
+
   router.post('/', addNewContact);
   router.post('/finish', finishContact);
+  router.post('/picture', getProfilePicture);
 
   return app.use('/contact', router);
 };

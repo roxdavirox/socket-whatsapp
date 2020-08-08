@@ -417,18 +417,7 @@ chatSocket.on('connection', (chatClient) => {
 
   getContacts(user.id)
     .then(async (contacts) => {
-      const whatsAppWeb = sharedSessions.getSession(ownerId);
-      const mappedContacts = contacts.map(async (contact) => {
-        if (!contact) return;
-        const [jid] = contact.jid.split('@');
-        const formatedJid = `${jid}@c.us`;
-        const response = await whatsAppWeb.getProfilePicture(formatedJid);
-        if (!response.eurl) return contact;
-        // eslint-disable-next-line consistent-return
-        return { ...contact, eurl: response.eurl };
-      });
-      const contactsWithPicture = await Promise.all(mappedContacts);
-      chatClient.emit('contacts', contactsWithPicture);
+      chatClient.emit('contacts', contacts);
       getChats(user.id).then((chats) => {
         chatClient.emit('chats', chats);
       });
