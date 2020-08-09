@@ -198,13 +198,19 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   if (sessionExists) {
     console.log('[qrcode-socket] session already exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
-    if (qrcodeConnected) {
+    const currentSession = sharedSessions.getSession(user.ud);
+    const sessionIsConnected = currentSession.status === 5;
+
+    console.log('[qrcode-socket] session is connected', sessionIsConnected);
+    if (qrcodeConnected && sessionIsConnected) {
       qrcodeClient.disconnect();
       return;
     }
-
+    console.log('[qrcode-socket] removendo qrcode');
     const whatsAppweb = sharedSessions.getSession(user.id);
+    console.log('[qrcode-socket] close connection');
     whatsAppweb.close();
+    console.log('[qrcode-socket] remove session');
     sharedSessions.removeSession(user.id);
   }
 
