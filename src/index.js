@@ -198,7 +198,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   if (sessionExists) {
     console.log('[qrcode-socket] session already exists');
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
-    const currentSession = sharedSessions.getSession(user.ud);
+    const currentSession = sharedSessions.getSession(user.id);
     const sessionIsConnected = currentSession.status === 5;
 
     console.log('[qrcode-socket] session is connected', sessionIsConnected);
