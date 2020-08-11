@@ -41,7 +41,10 @@ function connectAllQrcodes() {
         const whatsAppWeb = sharedSessions
           .createSession(new WhatsAppWeb(), qrcode.ownerId);
         const { authInfo } = qrcode;
-        whatsAppWeb.login(authInfo);
+        if (whatsAppWeb.status === 0) {
+          // faz login quando não está conectado
+          whatsAppWeb.login(authInfo);
+        }
 
         whatsAppWeb.handlers.onConnected = () => {
         };
@@ -204,9 +207,10 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
     const currentSession = sharedSessions.getSession(user.id);
     const sessionIsConnected = currentSession.status === 5;
+    const sessionIsLogging = currentSession.status === 4;
     console.log('[qrcode-socket] status da conexão: ', currentSession.status);
     console.log('[qrcode-socket] sessão está conectada:', sessionIsConnected);
-    if (qrcodeConnected && sessionIsConnected) {
+    if ((qrcodeConnected && sessionIsConnected) || sessionIsLogging) {
       console.log('[qrcode-socket] desconectando socket qrcode');
       qrcodeClient.disconnect();
       return;
@@ -230,9 +234,11 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
         return qrcode;
       }
       const { authInfo } = qrcode;
-      whatsAppWeb.login(authInfo);
-      console.log('[qrcode-socket] qrcode connected successfuly');
-      setTimeout(() => qrcodeClient.emit('qrcodeStatusConnection', true), 2000);
+      if (whatsAppWeb.status === 0) {
+        whatsAppWeb.login(authInfo);
+        console.log('[qrcode-socket] qrcode connectad successfuly');
+        setTimeout(() => qrcodeClient.emit('qrcodeStatusConnection', true), 2000);
+      }
 
       return qrcode;
     })
@@ -389,8 +395,7 @@ chatSocket.on('connection', (chatClient) => {
   const isNotConnected = whatsappSession.status !== 5;
   if (isNotConnected) {
     console.log('[chat-socket] whatsapp socket não está conectado', ownerId, user.email);
-    console.log('[chat-socket] chat socket desconectado.');
-    chatClient.disconnect();
+    console.log('[chat-socket] chat desconectado.');
     return;
   }
 
@@ -443,8 +448,6 @@ chatSocket.on('connection', (chatClient) => {
     // eslint-disable-next-line no-undef
     if (!whatsAppWeb || !whatsAppWeb.conn) {
       console.log('[chat-socket] não há conexão com o whatsapp web', user.email);
-      sharedSessions.removeSession(user.id);
-      console.log('[chat-socket] desconectado e sessão removida!', user.email);
       chatClient.disconnect();
       return;
     }
