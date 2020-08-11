@@ -21,7 +21,9 @@ module.exports = function (WhatsAppWeb) {
 
     this.conn.on('open', () => this.onConnect());
     this.conn.on('message', (m) => {
-      console.log('[whatsapp <-]', m);
+      if (!Buffer.isBuffer(m)) {
+        console.log('[whatsapp <-]', m);
+      }
       this.onMessageRecieved(m);
     }); // in WhatsAppWeb.Recv.js
     this.conn.on('error', (error) => { // if there was an error in the WebSocket
