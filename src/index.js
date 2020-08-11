@@ -346,6 +346,14 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeClient.disconnect();
   };
 
+  whatsAppWeb.handlers.onKeepAliveDisconnect = async () => {
+    console.log('[qrcode-socket] onKeepAliveDisconnect', user.email);
+    // qrcodeSocket.emit('qrcodeStatusConnection', false);
+    // sharedSessions.removeSession(user.id);
+    // QrcodeRepository.disconnectByOwnerId(user.id);
+    qrcodeClient.disconnect();
+  };
+
   whatsAppWeb.handlers.onDisconnect = async () => {
     console.log('[qrcode-socket] onDisconnect', user.email);
     qrcodeSocket.emit('qrcodeStatusConnection', false);

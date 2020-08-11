@@ -163,7 +163,7 @@ module.exports = function (WhatsAppWeb) {
         console.log('[core-session] disconnected from keep Alive request');
 
         this.close();
-        if (this.handlers.onDisconnect) this.handlers.onDisconnect();
+        if (this.handlers.onKeepAliveDisconnect) this.handlers.onKeepAliveDisconnect();
 
         if (this.autoReconnect) { // attempt reconnecting if the user wants us to
           // keep trying to connect
