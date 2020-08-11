@@ -124,6 +124,7 @@ function connectAllQrcodes() {
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           const [statusError] = err;
           if (statusError == 401 || statusError == 400) {
+            console.log('[qrcode-socket-setup] status error', statusError, qrcode.ownerId);
             console.log('[error] removendo qrcode do banco de dados');
             // removendo o qrcode ele força próxima vez gerar o qrcode
             QrcodeRepository.removeByOwnerId(qrcode.ownerId);
@@ -131,16 +132,17 @@ function connectAllQrcodes() {
         };
 
         whatsAppWeb.handlers.onDisconnect = async () => {
-          console.log('[qrcode-socket] whatsapp disconnected');
+          console.log('[qrcode-socket-setup] whatsapp desconectado', qrcode.ownerId);
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
+          console.log('[qrcode-socket-setup] removendo sessão', qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
 
         whatsAppWeb.handlers.onDisconnectFromPhone = async () => {
-          console.log('[qrcode-socket-setup] onDisconnectFromPhone');
-          QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
+          console.log('[qrcode-socket-setup] desconectado pelo telefone', qrcode.ownerId);
+          console.log('[qrcode-socket-setup] removendo qrcode do banco de dados', qrcode.ownerId);
           QrcodeRepository.removeByOwnerId(qrcode.ownerId);
-
+          console.log('[qrcode-socket-setup] removendo sessão', qrcode.ownerId);
           sharedSessions.removeSession(qrcode.ownerId);
         };
       });
@@ -186,8 +188,10 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     return;
   }
 
+  console.log('[qrcode-socket] usuário conectado', user.email, '-', user.name);
+
   if (user.role !== 'ADMIN') {
-    console.log('[qrcode-socket] user is not ADM role');
+    console.log('[qrcode-socket] usuário não é ADM - acesso negado.');
     qrcodeSocket.disconnect();
     return;
   }
@@ -196,27 +200,25 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   const qrcodeConnected = await QrcodeRepository.getQrcodeStatusByOwnerId(user.id);
 
   if (sessionExists) {
-    console.log('[qrcode-socket] session already exists');
+    console.log('[qrcode-socket] sessão do whatsapp já existe', user.email);
     qrcodeClient.emit('qrcodeStatusConnection', qrcodeConnected);
     const currentSession = sharedSessions.getSession(user.id);
     const sessionIsConnected = currentSession.status === 5;
-
-    console.log('[qrcode-socket] session is connected', sessionIsConnected);
+    console.log('[qrcode-socket] status da conexão: ', currentSession.status);
+    console.log('[qrcode-socket] sessão está conectada:', sessionIsConnected);
     if (qrcodeConnected && sessionIsConnected) {
+      console.log('[qrcode-socket] desconectando socket qrcode');
       qrcodeClient.disconnect();
       return;
     }
-    console.log('[qrcode-socket] removendo qrcode');
     const whatsAppweb = sharedSessions.getSession(user.id);
-    console.log('[qrcode-socket] close connection');
+    console.log('[qrcode-socket] fechando sessão anterior', user.email);
     whatsAppweb.close();
-    console.log('[qrcode-socket] remove session');
+    console.log('[qrcode-socket] removendo sessão anterior');
     sharedSessions.removeSession(user.id);
   }
 
   const whatsAppWeb = sharedSessions.createSession(new WhatsAppWeb(), user.id);
-
-  console.log('[qrcode-socket] new connection');
 
   QrcodeRepository
     .getAuthQrcodeInfoByOwnerId(user.id)
@@ -242,16 +244,14 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const qrcodeExists = await QrcodeRepository.qrcodeExists(user.id);
 
     if (!qrcodeExists) {
-      console.log('[qrcode-socket] storing first qrcode auth info connection');
+      console.log('[qrcode-socket] armazenando qrcode no banco de dados pela primeira vez');
       await QrcodeRepository.storeQrcodeAuthInfo(authInfo, user.id);
-      console.log('[qrcode-socket] qrcode auth info stored successfully');
+      console.log('[qrcode-socket] auth info do qrcode armazenado com sucesso!');
     } else {
-      console.log('[qrcode-socket] updating qrcode auth info connection');
+      console.log('[qrcode-socket] atualizando informações de conexão do qrcode');
       await QrcodeRepository.updateAuthInfo(authInfo, user.id);
-      console.log('[qrcode-socket] qrcode auth info updated successfully');
+      console.log('[qrcode-socket] informações do qrcode atualizadas com sucesso!');
     }
-
-    console.log('[qrcode-socket] whatsapp onConnected event');
     qrcodeSocket.emit('qrcodeStatusConnection', true);
   };
 
@@ -341,29 +341,27 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   };
 
   whatsAppWeb.handlers.onDisconnect = async () => {
-    console.log('[qrcode-socket] whatsapp disconnected');
+    console.log('[qrcode-socket] onDisconnect', user.email);
     qrcodeSocket.emit('qrcodeStatusConnection', false);
-    // QrcodeRepository.removeByOwnerId(user.id);
-    // whatsAppWeb.close();
     sharedSessions.removeSession(user.id);
     QrcodeRepository.disconnectByOwnerId(user.id);
     qrcodeClient.disconnect();
   };
 
   whatsAppWeb.handlers.onDisconnectFromPhone = async () => {
-    console.log('[qrcode-socket] onDisconnectFromPhone');
+    console.log('[qrcode-socket] onDisconnectFromPhone', user.email);
     qrcodeSocket.emit('qrcodeStatusConnection', false);
-    // whatsAppWeb.close();
+    console.log('[qrcode-socket] removendo a sessão - desconectado pelo celular', user.email);
     sharedSessions.removeSession(user.id);
-    QrcodeRepository.disconnectByOwnerId(user.id);
-    // remove pq foi feito pela pessoa - torna token invalido
+    console.log('[qrcode-socket] removendo qrcode do banco de dados', user.name);
     QrcodeRepository.removeByOwnerId(user.id);
+    console.log('[qrcode-socket] socket qrcode desconectado.');
     qrcodeClient.disconnect();
   };
 });
 
 chatSocket.on('connection', (chatClient) => {
-  console.log('[chat-socket] novo chat conectado');
+  console.log('[chat-socket] novo chat conectando...');
   const { user } = chatClient.request;
 
   if (!user) {
@@ -371,6 +369,7 @@ chatSocket.on('connection', (chatClient) => {
     chatClient.disconnect();
     return;
   }
+  console.log('[chat-socket] novo usuário conectado ao chat', user.name);
 
   const ownerId = user.role === 'ADMIN'
     ? user.id
@@ -379,7 +378,8 @@ chatSocket.on('connection', (chatClient) => {
   const hasActiveOwnerSession = sharedSessions.sessionExists(ownerId);
 
   if (!hasActiveOwnerSession) {
-    console.log('[chat-socket] no active owner session');
+    console.log('[chat-socket] a sessão', ownerId, ' não existe', user.email);
+    console.log('[chat-socket] chat socket desconectado.');
     chatClient.disconnect();
     return;
   }
@@ -388,7 +388,8 @@ chatSocket.on('connection', (chatClient) => {
 
   const isNotConnected = whatsappSession.status !== 5;
   if (isNotConnected) {
-    console.log('[chat-socket] whatsapp socket não está conectado');
+    console.log('[chat-socket] whatsapp socket não está conectado', ownerId, user.email);
+    console.log('[chat-socket] chat socket desconectado.');
     chatClient.disconnect();
     return;
   }
@@ -396,18 +397,19 @@ chatSocket.on('connection', (chatClient) => {
   const qrcodeIsConnected = QrcodeRepository.getQrcodeStatusByOwnerId(user.ownerId);
 
   if (!qrcodeIsConnected) {
-    console.log('[chat-socket] qrcode not found');
+    console.log('[chat-socket] qrcode não encontrado no banco de dados', user.email);
+    console.log('[chat-socket] chat socket desconectado.');
+    chatClient.disconnect();
     return;
   }
 
   chatClient.join(user.id);
   chatClient.on('disconnect', () => {
-    console.log('[socket-chat] client disconnect...', chatClient.id);
-    chatClient.disconnect();
+    console.log('[socket-chat] client disconnect...', chatClient.id, user.name);
   });
 
   chatClient.on('error', (err) => {
-    console.log('[chat-socket] received error from client:', chatClient.id);
+    console.log('[chat-socket] received error from client:', chatClient.id, user.name);
     console.log(err);
   });
 
@@ -440,9 +442,9 @@ chatSocket.on('connection', (chatClient) => {
     const whatsAppWeb = sharedSessions.getSession(ownerId);
     // eslint-disable-next-line no-undef
     if (!whatsAppWeb || !whatsAppWeb.conn) {
-      console.log('[chat-socket] não há conexão com o whatsapp web');
+      console.log('[chat-socket] não há conexão com o whatsapp web', user.email);
       sharedSessions.removeSession(user.id);
-      console.log('[chat-socket] desconectado e sessão removida!');
+      console.log('[chat-socket] desconectado e sessão removida!', user.email);
       chatClient.disconnect();
       return;
     }
