@@ -107,9 +107,11 @@ function connectAllQrcodes() {
           const contact = await ContactsRepository.getContact(remoteJid, qrcode.ownerId);
           if (!contact) return;
           await ContactsRepository.updateByContactId(contact.id, { active: true });
-          ChatsRepository.updateLastTimeAndMessage(
-            contact.id,
-            message.message.conversation || 'Nova mensagem',
+          ChatsRepository.updateLastTime(
+            contact.id, {
+              lastTextMessage: message.message.conversation || 'Nova mensagem',
+              read: false,
+            },
           );
           MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
             ...message, time,
@@ -313,9 +315,11 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const contact = await ContactsRepository.getContact(remoteJid, user.ownerId);
     if (!contact) return;
     await ContactsRepository.updateByContactId(contact.id, { active: true });
-    ChatsRepository.updateLastTimeAndMessage(
-      contact.id,
-      message.message.conversation || 'Nova mensagem',
+    ChatsRepository.updateLastTime(
+      contact.id, {
+        lastTextMessage: message.message.conversation || 'Nova mensagem',
+        read: false,
+      },
     );
     MessagesRepository.addNewMessageFromWhatsApp(remoteJid, contact.ownerId, {
       ...message, time,
@@ -454,8 +458,10 @@ chatSocket.on('connection', (chatClient) => {
     // envia mensagem do front para o whatsapp
     const whatsAppWeb = sharedSessions.getSession(ownerId);
     // eslint-disable-next-line no-undef
-    if (!whatsAppWeb || !whatsAppWeb.conn) {
+    if (!whatsAppWeb || !whatsAppWeb.conn || whatsAppWeb.status !== 5) {
       console.log('[chat-socket] não há conexão com o whatsapp web', user.email);
+      whatsAppWeb.close();
+      sharedSessions.removeSession(user.ownerId);
       chatClient.disconnect();
       return;
     }
