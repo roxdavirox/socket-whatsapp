@@ -478,9 +478,11 @@ chatSocket.on('connection', (chatClient) => {
       chatId,
       ...messageSent,
     };
-    ChatsRepository.updateLastTimeAndMessage(
-      contactId,
-      messageToStore.message.conversation || 'Nova mensagem',
+    ChatsRepository.updateLastTime(
+      contactId, {
+        lastTextMessage: message.message.conversation || 'Nova mensagem',
+        read: false,
+      },
     );
     MessagesRepository.addNewMessageFromClient(messageToStore);
     ContactsRepository.updateByContactId(contactId, { active: true });
