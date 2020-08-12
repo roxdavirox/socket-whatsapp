@@ -170,12 +170,15 @@ module.exports = function (WhatsAppWeb) {
           this.reconnectLoop = setInterval(() => {
             // only connect if we're not already in the prcoess of connectin
             if (this.status === Status.notConnected) {
+              console.log('[core] keep alive request - reconectando');
+
               this.connect();
             }
           }, 10 * 1000);
         }
       } else { // if its all good, send a keep alive request
         this.send('?,,');
+        console.log('[core] keep alive request');
       }
     }, 25 * 1000);
   };
