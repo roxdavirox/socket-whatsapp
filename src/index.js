@@ -187,7 +187,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   const { user } = qrcodeClient.request;
   if (!user) {
     console.log('[qrcode-socket] user not provided');
-    qrcodeSocket.disconnect();
+    qrcodeClient.disconnect();
     return;
   }
 
@@ -195,7 +195,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
 
   if (user.role !== 'ADMIN') {
     console.log('[qrcode-socket] usuário não é ADM - acesso negado.');
-    qrcodeSocket.disconnect();
+    qrcodeClient.disconnect();
     return;
   }
 
