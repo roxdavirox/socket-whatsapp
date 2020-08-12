@@ -129,8 +129,24 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
+  const updateReadChat = async (req, res) => {
+    try {
+      const { contactId } = req.params;
+      await ChatsRepository.updateByContactId(contactId, { read: true });
+      console.log('[chat-controller] chat atualizado com read true');
+      return res
+        .status(200)
+        .send({ updated: true });
+    } catch (e) {
+      return res
+        .status(400)
+        .send({ error: `${e}`, updated: false });
+    }
+  };
+
   router.post('/document', upload.single('document'), uploadDocument);
   router.post('/image', upload.single('image'), uploadImage);
+  router.post('/read/:contactId', updateReadChat);
 
   return app.use('/chat', router);
 };
