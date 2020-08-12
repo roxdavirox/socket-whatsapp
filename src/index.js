@@ -480,8 +480,7 @@ chatSocket.on('connection', (chatClient) => {
     };
     ChatsRepository.updateLastTime(
       contactId, {
-        lastTextMessage: message.message.conversation || 'Nova mensagem',
-        read: false,
+        lastTextMessage: messageToStore.message.conversation || 'Nova mensagem',
       },
     );
     MessagesRepository.addNewMessageFromClient(messageToStore);
