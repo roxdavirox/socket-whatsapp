@@ -1,3 +1,6 @@
+/* eslint-disable eqeqeq */
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-tabs */
 const WebSocket = require('ws');
 const Curve = require('curve25519-js');
 const QR = require('qrcode-terminal');
@@ -37,7 +40,8 @@ module.exports = function (WhatsAppWeb) {
     console.log('[core] connected to WhatsApp Web');
 
     this.status = Status.creatingNewConnection;
-    if (!this.authInfo) { // if no auth info is present, that is, a new session has to be established
+    // if no auth info is present, that is, a new session has to be established
+    if (!this.authInfo) {
       this.authInfo = { clientID: Utils.generateClientID() }; // generate a client ID
     }
 
@@ -123,7 +127,8 @@ module.exports = function (WhatsAppWeb) {
     }
   };
   /*
-	when logging back in (restoring a previously closed session), WhatsApp may challenge one to check if one still has the encryption keys
+  when logging back in (restoring a previously closed session),
+  WhatsApp may challenge one to check if one still has the encryption keys
 	WhatsApp does that by asking for us to sign a string it sends with our macKey
 	*/
   WhatsAppWeb.prototype.respondToChallenge = function (challenge) {
@@ -136,7 +141,8 @@ module.exports = function (WhatsAppWeb) {
     this.sendJSON(data);
   };
   /*
-	when starting a new session, generate a QR code by generating a private/public key pair & the keys the server sends
+    when starting a new session,
+    generate a QR code by generating a private/public key pair & the keys the server sends
 	*/
   WhatsAppWeb.prototype.generateKeysForAuth = function (ref) {
     this.curveKeys = Curve.generateKeyPair(Utils.randomBytes(32));
@@ -159,7 +165,7 @@ module.exports = function (WhatsAppWeb) {
 			check if it's been a suspicious amount of time since the server responded with our last seen
 			could be that the network is down, or the phone got disconnected or unpaired
 			*/
-      if (diff > 25 + 10) {
+      if (diff > 20 + 10) {
         console.log('[core-session] disconnected from keep Alive request');
 
         this.close();
@@ -180,9 +186,10 @@ module.exports = function (WhatsAppWeb) {
         this.send('?,,');
         console.log('[core] keep alive request');
       }
-    }, 25 * 1000);
+    }, 20 * 1000);
   };
-  // disconnect from the phone. Your auth credentials become invalid after sending a disconnect request.
+  // disconnect from the phone.
+  // Your auth credentials become invalid after sending a disconnect request.
   // use close() if you just want to close the connection
   WhatsAppWeb.prototype.disconnect = function (fromPhone = true) {
     if (this.status === Status.connected) {
