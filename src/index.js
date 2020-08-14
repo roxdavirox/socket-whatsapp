@@ -123,16 +123,21 @@ function connectAllQrcodes() {
 
         whatsAppWeb.handlers.onError = (err) => {
           console.error('[whatsapp] error: ', err);
-          if (sharedSessions.sessionExists(qrcode.ownerId)) {
-            sharedSessions.removeSession(qrcode.ownerId);
-          }
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           const [statusError] = err;
           if (statusError == 401 || statusError == 400) {
             console.log('[qrcode-socket-setup] status error', statusError, qrcode.ownerId);
-            console.log('[error] removendo qrcode do banco de dados');
+            console.log('[error] removendo qrcode do banco de dados', qrcode.ownerId);
             // removendo o qrcode ele força próxima vez gerar o qrcode
             QrcodeRepository.removeByOwnerId(qrcode.ownerId);
+          }
+
+          if (sharedSessions.sessionExists(qrcode.ownerId)) {
+            const session = sharedSessions.getSession(qrcode.ownerId);
+            console.log('[qrcode-setup] fechando conexão do whatsapp socket', qrcode.ownerId);
+            session.close();
+            console.log('[qrcode-setup] removendo sessão', qrcode.ownerId);
+            sharedSessions.removeSession(qrcode.ownerId);
           }
         };
 
@@ -219,9 +224,14 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     }
     const whatsAppweb = sharedSessions.getSession(user.id);
     console.log('[qrcode-socket] fechando sessão anterior', user.email);
-    whatsAppweb.close();
-    console.log('[qrcode-socket] removendo sessão anterior');
-    sharedSessions.removeSession(user.id);
+
+    if (whatsAppweb) {
+      console.log('[qrcode-socket] fechando conexão do whatsapp socket', user.id);
+      whatsAppweb.close();
+
+      console.log('[qrcode-socket] removendo sessão anterior', user.email);
+      sharedSessions.removeSession(user.id);
+    }
   }
 
   const whatsAppWeb = sharedSessions.createSession(new WhatsAppWeb(), user.id);
@@ -331,20 +341,24 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   };
 
   whatsAppWeb.handlers.onError = (err) => {
-    console.error('[whatsapp] error: ', err);
+    console.error('[qrcode-socket] error: ', err);
     const [statusError] = err;
 
     qrcodeSocket.emit('qrcodeStatusConnection', false);
 
     QrcodeRepository.disconnectByOwnerId(user.id);
     if (statusError == 401 || statusError == 400) {
-      console.log('[error] removendo qrcode do banco de dados');
+      console.log('[qrcode-socket] Erro - removendo qrcode do banco de dados. status:', statusError);
       // removendo o qrcode ele força próxima vez gerar o qrcode
       QrcodeRepository.removeByOwnerId(user.id);
       // envia status de erro para o front atualizar o qrcode container
       qrcodeSocket.emit('status-error', statusError);
     }
     if (sharedSessions.sessionExists(user.id)) {
+      const session = sharedSessions.getSession(user.id);
+      console.log('[qrcode-socket] fechando conexão do whatsapp socket', user.id);
+      session.close();
+      console.log('[qrcode-socket] removendo sessão', user.id);
       sharedSessions.removeSession(user.id);
     }
     qrcodeClient.disconnect();
