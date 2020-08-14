@@ -1,3 +1,8 @@
+/* eslint-disable max-len */
+/* eslint-disable consistent-return */
+/* eslint-disable no-lonely-if */
+/* eslint-disable func-names */
+/* eslint-disable no-console */
 /* eslint-disable eqeqeq */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-tabs */
@@ -66,7 +71,7 @@ module.exports = function (WhatsAppWeb) {
   };
   // once the QR code is scanned and we can validate our connection,
   // or we resolved the challenge when logging back in
-  WhatsAppWeb.prototype.validateNewConnection = async function (json) {
+  WhatsAppWeb.prototype.validateNewConnection = function (json) {
     if (json.connected) { // only if we're connected
       if (!json.secret) { // if we didn't get a secret, that is we don't need it
         return this.didConnectSuccessfully();
@@ -106,14 +111,14 @@ module.exports = function (WhatsAppWeb) {
         this.status = Status.CONNECTED;
 
         this.didConnectSuccessfully();
-        const result = await this.query(['query', 'ProfilePicThumb', json.wid]);
-        const { eurl = {} } = result;
-        console.log('eurl', eurl);
+        // const result = await this.query(['query', 'ProfilePicThumb', json.wid]);
+        // const { eurl = {} } = result;
+        // console.log('eurl', eurl);
         this.userMetaData = {
           id: json.wid, // one's WhatsApp ID [cc][number]@s.whatsapp.net
           name: json.pushname, // name set on whatsapp
           phone: json.phone, // information about the phone one has logged in to
-          eurl,
+          eurl: '',
         };
       } else { // if the checksums didn't match
         this.close();
@@ -165,7 +170,7 @@ module.exports = function (WhatsAppWeb) {
 			check if it's been a suspicious amount of time since the server responded with our last seen
 			could be that the network is down, or the phone got disconnected or unpaired
 			*/
-      if (diff > 20 + 10) {
+      if (diff > 25 + 10) {
         console.log('[core-session] disconnected from keep Alive request');
 
         this.close();
@@ -186,7 +191,7 @@ module.exports = function (WhatsAppWeb) {
         this.send('?,,');
         console.log('[core] keep alive request');
       }
-    }, 20 * 1000);
+    }, 25 * 1000);
   };
   // disconnect from the phone.
   // Your auth credentials become invalid after sending a disconnect request.
