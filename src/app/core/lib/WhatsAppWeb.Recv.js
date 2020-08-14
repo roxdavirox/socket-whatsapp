@@ -332,6 +332,7 @@ module.exports = function (WhatsAppWeb) {
       imageMessage: 'images',
       audioMessage: 'audios',
       documentMessage: 'files',
+      videoMessage: 'videos',
     };
 
     // get the keys to decrypt the message
