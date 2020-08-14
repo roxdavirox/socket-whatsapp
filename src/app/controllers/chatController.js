@@ -72,6 +72,52 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
+  const uploadVideo = async (req, res) => {
+    const {
+      contactId, ownerId, userId,
+    } = req.body;
+    const { file } = req;
+    const sessionExists = sharedSessions.sessionExists(ownerId);
+    if (!sessionExists) {
+      return res.status(400).send({ error: 'session not exists' });
+    }
+    const whatsapp = sharedSessions.getSession(ownerId);
+    try {
+      const contact = await ContactsRepository.getContactById(contactId);
+      const fileExtension = getExtension(file.originalname);
+      const fileName = `${uuid()}.${fileExtension}`;
+      const { buffer } = file;
+      const url = await azure.uploadVideo(buffer, fileName);
+      const messageSent = await whatsapp.sendMediaMessage(contact.jid, buffer, 'videoMessage');
+      const chat = await ChatsRepository.getChatByContactId(contact.id);
+      const time = new Date();
+      const messageToStore = removeUndefinedFields({
+        ownerId,
+        userId,
+        contactId,
+        chatId: chat.id,
+        time,
+        ...messageSent,
+        message: {
+          videoMessage: {
+            ...messageSent.message.videoMessage,
+            fileUrl: url,
+            caption: messageSent.message.caption || '',
+          },
+        },
+      });
+
+      ChatsRepository.updateByContactId(contactId, { lastMessageTime: time });
+      MessagesRepository.addNewMessageFromClient(messageToStore);
+      console.log('[chat-controller] message image send', messageToStore);
+      return res.status(200).send({ url });
+    } catch (e) {
+      return res
+        .status(400)
+        .send({ error: `${e}` });
+    }
+  };
+
   const uploadDocument = async (req, res) => {
     const {
       contactId, ownerId, userId,
@@ -145,6 +191,7 @@ module.exports = ({ app, sharedSessions }) => {
   };
 
   router.post('/document', upload.single('document'), uploadDocument);
+  router.post('/video', upload.single('video'), uploadVideo);
   router.post('/image', upload.single('image'), uploadImage);
   router.post('/read/:contactId', updateReadChat);
 
