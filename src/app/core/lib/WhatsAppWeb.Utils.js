@@ -81,19 +81,19 @@ module.exports = {
       fs.writeFileSync(filename, buffer);
 
       promise = new Promise((resolve, reject) => {
-        VideoThumb.extract(filename, `${filename}.png`, '00:00:00', '48x48', (err) => {
+        VideoThumb.extract(filename, `${filename}.jpg`, '00:00:00', '48x48', (err) => {
           if (err) {
             console.log(`could not generate video thumb: ${err}`);
             resolve();
           } else {
-            const buff = fs.readFileSync(`${filename}.png`);
+            const buff = fs.readFileSync(`${filename}.jpg`);
             return sharp(buff)
               .jpeg()
               .toBuffer()
-              .then((buffer) => info.thumbnail = buffer.toString('base64'))
+              .then((_buffer) => info.thumbnail = _buffer.toString('base64'))
               .then(() => {
                 fs.unlinkSync(filename);
-                fs.unlinkSync(`${filename}.png`);
+                fs.unlinkSync(`${filename}.jpg`);
                 resolve();
               });
           }
