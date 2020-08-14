@@ -62,23 +62,17 @@ function connectAllQrcodes() {
           // eslint-disable-next-line no-prototype-builtins
           if (message.key.remoteJid && (isStatus || isGroup)) return;
           if (!message.message) return;
-          // verificar como exibir um sticker
+
           const isImage = message.message.hasOwnProperty('imageMessage');
-          if (isImage) {
-            console.log('[qrcode-socket] Imagem recebida');
-            await whatsAppWeb.decodeMediaMessage(message.message);
-          }
           const isAudio = message.message.hasOwnProperty('audioMessage');
-          if (isAudio) {
-            console.log('[qrcode-socket] audio recebido');
-            await whatsAppWeb.decodeMediaMessage(message.message);
-          }
           const isDocument = message.message.hasOwnProperty('documentMessage');
-          if (isDocument) {
-            console.log('[qrcode-socket] documento recebido');
+          const isVideo = message.message.hasOwnProperty('videoMessage');
+
+          if (isImage || isAudio || isDocument || isVideo) {
+            console.log('[qrcode-socket-setup] arquivo recebido');
             await whatsAppWeb.decodeMediaMessage(message.message);
           }
-          console.log('nova mensagem do whatsapp:', message);
+          console.log('[qrcode-socket-setup] nova mensagem do whatsapp:', message);
           const time = new Date();
 
           const { remoteJid } = message.key;
@@ -290,8 +284,9 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const isImage = message.message.hasOwnProperty('imageMessage');
     const isAudio = message.message.hasOwnProperty('audioMessage');
     const isDocument = message.message.hasOwnProperty('documentMessage');
+    const isVideo = message.message.hasOwnProperty('videoMessage');
 
-    if (isImage || isAudio || isDocument) {
+    if (isImage || isAudio || isDocument || isVideo) {
       console.log('[qrcode-socket] arquivo recebido');
       await whatsAppWeb.decodeMediaMessage(message.message);
     }
