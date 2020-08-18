@@ -1,6 +1,7 @@
 FROM node
 
 RUN apt-get update
+RUN apk add  --no-cache ffmpeg
 RUN mkdir /app
 WORKDIR /app
 
