@@ -469,7 +469,7 @@ chatSocket.on('connection', (chatClient) => {
     // eslint-disable-next-line no-undef
     if (!whatsAppWeb || !whatsAppWeb.conn || whatsAppWeb.status !== 5) {
       console.log('[chat-socket] não há conexão com o whatsapp web', user.email);
-      whatsAppWeb.close();
+      if (whatsAppWeb) whatsAppWeb.close();
       sharedSessions.removeSession(user.ownerId);
       chatClient.disconnect();
       return;
