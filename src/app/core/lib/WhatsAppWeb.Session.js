@@ -1,3 +1,4 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
 /* eslint-disable max-len */
 /* eslint-disable consistent-return */
 /* eslint-disable no-lonely-if */
@@ -56,6 +57,9 @@ module.exports = function (WhatsAppWeb) {
       WhatsAppWeb.version, WhatsAppWeb.browserDescriptions, this.authInfo.clientID, true];
 
     this.sendJSON(data);
+	  this.lastSeen = new Date(); // set last seen to right now
+
+    this.startKeepAliveRequest();
   };
   // restore a previously closed session using the given authentication information
   WhatsAppWeb.prototype.login = function (authInfo) {
