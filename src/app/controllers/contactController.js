@@ -22,13 +22,15 @@ module.exports = ({ app, sharedSessions }) => {
       const phoneExists = await whatsapp.isOnWhatsApp(phoneJid);
 
       if (!phoneExists) {
-        return res.status(400).send({ error: 'phone not exists on whatsapp' });
+        return res.status(400)
+          .send({ error: 'Este contato não existe no whatsapp :(', notify: 'error' });
       }
 
       const contactExists = await ContactsRepository.contactExists(phoneJid, ownerId);
 
       if (contactExists) {
-        return res.status(400).send({ error: 'contact alredy exists' });
+        return res.status(400)
+          .send({ error: 'Este contato já existe :(', notify: 'error' });
       }
 
       const contact = {
@@ -36,7 +38,7 @@ module.exports = ({ app, sharedSessions }) => {
         name,
         notify: name,
         ownerId,
-        phone: `${countryCode}${phone}`,
+        phone,
         short: name,
         userId,
         active: true,
@@ -57,7 +59,8 @@ module.exports = ({ app, sharedSessions }) => {
         ...contact,
       };
 
-      return res.status(200).send({ contact: createdContact, chat });
+      return res.status(200)
+        .send({ contact: createdContact, chat, notify: 'success' });
     } catch (e) {
       return res
         .status(400)
