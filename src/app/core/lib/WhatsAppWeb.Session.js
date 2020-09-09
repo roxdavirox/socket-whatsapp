@@ -174,7 +174,7 @@ module.exports = function (WhatsAppWeb) {
 			check if it's been a suspicious amount of time since the server responded with our last seen
 			could be that the network is down, or the phone got disconnected or unpaired
 			*/
-      if (diff > 25 + 20) {
+      if (diff > 25 + 10) {
         console.log('[core-session] disconnected from keep Alive request');
 
         this.close();
