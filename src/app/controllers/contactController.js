@@ -18,8 +18,7 @@ module.exports = ({ app, sharedSessions }) => {
 
     const whatsapp = sharedSessions.getSession(ownerId);
     try {
-      const countryCode = '55';
-      const phoneJid = `${countryCode}${phone}@s.whatsapp.net`;
+      const phoneJid = `${phone}@s.whatsapp.net`;
       const phoneExists = await whatsapp.isOnWhatsApp(phoneJid);
 
       if (!phoneExists) {
