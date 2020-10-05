@@ -119,7 +119,7 @@ function connectAllQrcodes() {
           console.error('[whatsapp] error: ', err);
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
           const [statusError] = err;
-          if (statusError == 401 || statusError == 400) {
+          if (statusError == 401 || statusError == 400 || statusError == 419) {
             console.log('[qrcode-socket-setup] status error', statusError, qrcode.ownerId);
             console.log('[error] removendo qrcode do banco de dados', qrcode.ownerId);
             // removendo o qrcode ele força próxima vez gerar o qrcode
@@ -342,7 +342,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     qrcodeSocket.emit('qrcodeStatusConnection', false);
 
     QrcodeRepository.disconnectByOwnerId(user.id);
-    if (statusError == 401 || statusError == 400) {
+    if (statusError == 401 || statusError == 400 || statusError == 419) {
       console.log('[qrcode-socket] Erro - removendo qrcode do banco de dados. status:', statusError);
       // removendo o qrcode ele força próxima vez gerar o qrcode
       QrcodeRepository.removeByOwnerId(user.id);
