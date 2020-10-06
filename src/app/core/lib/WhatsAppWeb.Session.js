@@ -192,6 +192,7 @@ module.exports = function (WhatsAppWeb) {
         this.send('?,,');
         console.log('[core] keep alive request');
       }
+      this.checkPhoneConnection();
     }, 25 * 1000);
   };
   // disconnect from the phone.
@@ -231,5 +232,34 @@ module.exports = function (WhatsAppWeb) {
     }
     const json = ['admin', 'Conn', 'reref'];
     this.sendJSON(json);
+  };
+
+  /**
+   * Check if your phone is connected
+   * @param timeoutMs max time for the phone to respond
+   */
+  WhatsAppWeb.prototype.checkPhoneConnection = async function (timeoutMs = 5000) {
+    console.log('[system] verificando status da conexão do phone');
+    try {
+      const makeRequest = new Promise((resolve, reject) => {
+        this.query(['admin', 'test']).then(resolve);
+        setTimeout(reject, timeoutMs);
+      });
+
+      makeRequest.then(([pong, connectionStatus]) => {
+        this.status = pong === 'Pong' && connectionStatus == true
+          ? WhatsAppWeb.Status.connected : WhatsAppWeb.Status.notConnected;
+      })
+        .catch(() => {
+          this.status = WhatsAppWeb.Status.notConnected;
+          console.log('[system] cancelando pong request');
+        });
+
+      console.log('[system] response pong status', this.status);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 };
