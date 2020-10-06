@@ -253,6 +253,7 @@ module.exports = function (WhatsAppWeb) {
         .catch(() => {
           this.status = WhatsAppWeb.Status.notConnected;
           console.log('[system] cancelando pong request');
+          this.disconnect();
         });
 
       console.log('[system] response pong status', this.status);
