@@ -116,9 +116,10 @@ function connectAllQrcodes() {
         };
 
         whatsAppWeb.handlers.onError = (err) => {
+          const [statusError] = err;
+          if (!statusError || statusError == 3) return;
           console.error('[whatsapp] error: ', err);
           QrcodeRepository.disconnectByOwnerId(qrcode.ownerId);
-          const [statusError] = err;
           if (statusError == 401 || statusError == 400 || statusError == 419) {
             console.log('[qrcode-socket-setup] status error', statusError, qrcode.ownerId);
             console.log('[error] removendo qrcode do banco de dados', qrcode.ownerId);
@@ -211,7 +212,7 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
     const sessionIsLogging = currentSession.status === 4;
     console.log('[qrcode-socket] status da conexão: ', currentSession.status);
     console.log('[qrcode-socket] sessão está conectada:', sessionIsConnected);
-    if ((qrcodeConnected && sessionIsConnected) || sessionIsLogging) {
+    if ((qrcodeConnected && sessionIsConnected) || sessionIsLogging || currentSession.isSleeping) {
       console.log('[qrcode-socket] desconectando socket qrcode');
       qrcodeClient.disconnect();
       return;
@@ -336,8 +337,9 @@ qrcodeSocket.on('connection', async (qrcodeClient) => {
   };
 
   whatsAppWeb.handlers.onError = (err) => {
-    console.error('[qrcode-socket] error: ', err);
     const [statusError] = err;
+    if (!statusError || statusError == 3) return;
+    console.error('[qrcode-socket] error: ', err);
 
     qrcodeSocket.emit('qrcodeStatusConnection', false);
 

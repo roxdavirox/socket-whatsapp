@@ -181,7 +181,7 @@ module.exports = function (WhatsAppWeb) {
           // keep trying to connect
           this.reconnectLoop = setInterval(() => {
             // only connect if we're not already in the prcoess of connectin
-            if (this.status === Status.notConnected) {
+            if (this.status === Status.notConnected && !this.isSleeping) {
               console.log('[core] keep alive request - reconectando');
 
               this.connect();
@@ -191,8 +191,10 @@ module.exports = function (WhatsAppWeb) {
       } else { // if its all good, send a keep alive request
         this.send('?,,');
         console.log('[core] keep alive request');
+        if (this.isSleeping) {
+          this.checkPhoneConnection();
+        }
       }
-      this.checkPhoneConnection();
     }, 25 * 1000);
   };
   // disconnect from the phone.
@@ -241,22 +243,25 @@ module.exports = function (WhatsAppWeb) {
   WhatsAppWeb.prototype.checkPhoneConnection = async function (timeoutMs = 5000) {
     console.log('[system] verificando status da conexão do phone');
     try {
-      const makeRequest = new Promise((resolve, reject) => {
+      const makeRequest = new Promise((resolve) => {
         this.query(['admin', 'test']).then(resolve);
-        setTimeout(reject, timeoutMs);
+        // setTimeout(() => resolve(['Pong', false]), timeoutMs);
       });
 
       makeRequest.then(([pong, connectionStatus]) => {
-        this.status = pong === 'Pong' && connectionStatus == true
-          ? WhatsAppWeb.Status.connected : WhatsAppWeb.Status.notConnected;
+        if (pong === 'Pong' && connectionStatus == true) {
+          this.status = WhatsAppWeb.Status.connected;
+          this.isSleeping = false;
+        } else {
+          this.status = WhatsAppWeb.Status.notConnected;
+        }
+        console.log('[system] response pong status', this.status);
       })
         .catch(() => {
           this.status = WhatsAppWeb.Status.notConnected;
           console.log('[system] cancelando pong request');
           this.disconnect();
         });
-
-      console.log('[system] response pong status', this.status);
 
       return true;
     } catch (e) {

@@ -87,7 +87,9 @@ module.exports = function (WhatsAppWeb) {
             Sometimes, we also recieve it when one opens their phone
           */
           console.log('[core-recv] Validating new connection');
-          this.validateNewConnection(json[1]);
+          if (json[1].ref) {
+            this.validateNewConnection(json[1]);
+          }
           if (json[1].wid) {
             this.handlers.onReceiveUserPhone(json[1].wid);
           }
@@ -202,6 +204,12 @@ module.exports = function (WhatsAppWeb) {
           if (this.handlers.presenceUpdated) {
             this.handlers.presenceUpdated(json[1].id, json[1].type);
           }
+          return;
+
+        case 'Stream':
+          if (json[1] !== 'asleep') return;
+          this.isSleeping = true;
+          this.checkPhoneConnection();
           return;
         default:
           break;

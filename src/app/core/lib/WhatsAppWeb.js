@@ -6,7 +6,7 @@ class WhatsAppWeb {
 	static version = [0, 4, 1296] // the version of WhatsApp Web we're telling the servers we are
 
 	static browserDescriptions = ['Whatspipe', 'By FutureDev']
-
+	
 	static Status = {
 	  notConnected: 0,
 	  connecting: 1,
@@ -52,6 +52,7 @@ class WhatsAppWeb {
 
 	  this.encoder = new BinaryCoding.Encoder();
 	  this.decoder = new BinaryCoding.Decoder();
+	 	this.isSleeping = false; // para saber se a conexão está ativa(do aparelho)
 
 	  this.status = WhatsAppWeb.Status.notConnected;
 	}
