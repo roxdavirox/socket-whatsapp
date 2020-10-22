@@ -73,7 +73,7 @@ class WhatsAppWeb {
 	  this.status = WhatsAppWeb.Status.connected; // update our status
 	  this.lastSeen = new Date(); // set last seen to right now
 	  // start sending keep alive requests (keeps the WebSocket alive & updates our last seen)
-	  // this.startKeepAliveRequest();
+	  this.startKeepAliveRequest();
 
 	  if (this.reconnectLoop) { // if we connected after being disconnected
 	    clearInterval(this.reconnectLoop); // kill the loop to reconnect us
