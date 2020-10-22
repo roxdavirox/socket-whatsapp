@@ -44,6 +44,8 @@ module.exports = function (WhatsAppWeb) {
   // once a connection has been successfully established
   WhatsAppWeb.prototype.onConnect = function () {
     console.log('[core] connected to WhatsApp Web');
+    // inicia keep alive junto com a conexão
+    this.startKeepAliveRequest();
 
     this.status = Status.creatingNewConnection;
     // if no auth info is present, that is, a new session has to be established
