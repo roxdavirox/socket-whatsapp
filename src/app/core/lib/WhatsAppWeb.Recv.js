@@ -253,6 +253,7 @@ module.exports = function (WhatsAppWeb) {
                   'takeover',
                 ];
                 this.sendJSON(data);
+                this.startKeepAliveRequest();
               } else {
                 this.generateKeysForAuth(json.ref);
               }
