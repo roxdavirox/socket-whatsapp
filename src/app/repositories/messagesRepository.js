@@ -8,6 +8,7 @@ function MessagesRepository() {
     async waitForMessage(userId, cb) {
       const sendEachMessage = (cursor) => {
         cursor.each((error, msg) => {
+          if (!msg) return;
           const newValue = msg.new_val;
           cb(newValue);
         });
