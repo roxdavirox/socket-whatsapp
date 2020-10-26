@@ -229,14 +229,20 @@ module.exports = function (WhatsAppWeb) {
   };
   // send a JSON message to WhatsApp servers
   WhatsAppWeb.prototype.sendJSON = function (json) {
-    console.log('[whatsapp ->]', json);
-
     const str = JSON.stringify(json);
     const tag = Utils.generateMessageTag();
-    // console.log('tag', tag);
+    console.log(`[${tag}! whatsapp -> [${json}]`);
     this.send(`${tag},${str}`);
     return tag;
   };
+
+  WhatsAppWeb.prototype.sendJSONWithTag = function (json, tag) {
+    const str = JSON.stringify(json);
+    this.send(`${tag},${str}`);
+    console.log(`[${tag}! whatsapp -> [${json}]`);
+    return tag;
+  };
+
   WhatsAppWeb.prototype.send = function (m) {
     // increment message count, it makes the 'epoch' field when sending binary messages
     this.msgCount += 1;

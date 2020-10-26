@@ -71,7 +71,7 @@ class WhatsAppWeb {
 	  console.log('[core] connected successfully!');
 
 	  this.status = WhatsAppWeb.Status.connected; // update our status
-	  this.lastSeen = new Date(); // set last seen to right now
+	  // this.lastSeen = new Date(); // set last seen to right now
 	  // start sending keep alive requests (keeps the WebSocket alive & updates our last seen)
 	  // this.startKeepAliveRequest();
 
