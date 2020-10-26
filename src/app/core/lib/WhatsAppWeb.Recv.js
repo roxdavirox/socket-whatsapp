@@ -89,6 +89,7 @@ module.exports = function (WhatsAppWeb) {
           console.log('[core-recv] Validating new connection');
           if (json[1].ref) {
             this.validateNewConnection(json[1]);
+            this.retryLogin = null;
           }
           if (json[1].wid) {
             this.handlers.onReceiveUserPhone(json[1].wid);
@@ -253,6 +254,12 @@ module.exports = function (WhatsAppWeb) {
                   'takeover',
                 ];
                 this.sendJSON(data);
+                if (this.retryLogin) {
+                  this.retryLogin = setInterval(() => {
+                    this.sendJSON(data);
+                  }, 15 * 1000);
+                }
+
                 this.startKeepAliveRequest();
               } else {
                 this.generateKeysForAuth(json.ref);
