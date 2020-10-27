@@ -193,11 +193,12 @@ module.exports = ({ app, sharedSessions }) => {
   const updateFixedChat = async (req, res) => {
     try {
       const { contactId } = req.params;
-      await ChatsRepository.updateByContactId(contactId, { fixed: true });
+      const chat = await ChatsRepository.getChatByContactId(contactId);
+      await ChatsRepository.updateByContactId(contactId, { fixed: !chat.fixed });
       console.log('[chat-controller] chat atualizado com fixed true');
       return res
         .status(200)
-        .send({ updated: true });
+        .send({ updated: true, fixed: !chat.fixed });
     } catch (e) {
       return res
         .status(400)
