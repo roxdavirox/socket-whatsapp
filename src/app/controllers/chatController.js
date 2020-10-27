@@ -190,10 +190,26 @@ module.exports = ({ app, sharedSessions }) => {
     }
   };
 
+  const updateFixedChat = async (req, res) => {
+    try {
+      const { contactId } = req.params;
+      await ChatsRepository.updateByContactId(contactId, { fixed: true });
+      console.log('[chat-controller] chat atualizado com fixed true');
+      return res
+        .status(200)
+        .send({ updated: true });
+    } catch (e) {
+      return res
+        .status(400)
+        .send({ error: `${e}`, updated: false });
+    }
+  };
+
   router.post('/document', upload.single('document'), uploadDocument);
   router.post('/video', upload.single('video'), uploadVideo);
   router.post('/image', upload.single('image'), uploadImage);
   router.post('/read/:contactId', updateReadChat);
+  router.post('/fix/:contactId', updateFixedChat);
 
   return app.use('/chat', router);
 };
