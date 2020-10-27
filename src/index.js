@@ -525,7 +525,7 @@ chatSocket.on('connection', (chatClient) => {
 
     await ContactsRepository.updateByContactId(contactId, { userId });
 
-    await ChatsRepository.updateByContactId(contactId, { userId });
+    await ChatsRepository.updateByContactId(contactId, { userId, fixed: false });
     await ChatsRepository.updateLastMessageByContactId(contactId);
     const chat = await ChatsRepository.getChatByContactId(contactId);
     const contactToTransfer = await ContactsRepository.getContactById(contactId);
