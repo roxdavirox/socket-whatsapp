@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable consistent-return */
 /* eslint-disable no-console */
 /* eslint-disable no-prototype-builtins */
@@ -46,7 +47,20 @@ function connectAllQrcodes() {
           whatsAppWeb.login(authInfo);
         }
 
-        whatsAppWeb.handlers.onConnected = () => {
+        whatsAppWeb.handlers.onConnected = async () => {
+          // get all the auth info we need to restore this session
+          const _authInfo = whatsAppWeb.base64EncodedAuthInfo();
+          const qrcodeExists = await QrcodeRepository.qrcodeExists(qrcode.ownerId);
+
+          if (!qrcodeExists) {
+            console.log('[setup] armazenando qrcode no banco de dados pela primeira vez');
+            await QrcodeRepository.storeQrcodeAuthInfo(_authInfo, qrcode.ownerId);
+            console.log('[setup] auth info do qrcode armazenado com sucesso!');
+          } else {
+            console.log('[setup] atualizando informações de conexão do qrcode');
+            await QrcodeRepository.updateAuthInfo(_authInfo, qrcode.ownerId);
+            console.log('[setup] informações do qrcode atualizadas com sucesso!');
+          }
         };
 
         whatsAppWeb.handlers.onReceiveUserPhone = async (wid) => {

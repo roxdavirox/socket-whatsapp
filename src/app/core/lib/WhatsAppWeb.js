@@ -67,7 +67,7 @@ class WhatsAppWeb {
 	}
 
 	// called when established a connection to the WhatsApp servers successfully
-	didConnectSuccessfully() {
+	didConnectSuccessfully(json) {
 	  console.log('[core] connected successfully!');
 
 	  this.status = WhatsAppWeb.Status.connected; // update our status
@@ -78,8 +78,12 @@ class WhatsAppWeb {
 	  if (this.reconnectLoop) { // if we connected after being disconnected
 	    clearInterval(this.reconnectLoop); // kill the loop to reconnect us
 	  } else if (this.handlers.onConnected) {
+			// armazena os dados da conexão do qrcode sem os dados da criptografia
+			// refresh token
+	    this.authInfo.serverToken = json.serverToken;
+	    this.authInfo.clientToken = json.clientToken;
 	    // if we connected for the first time, i.e. not after being disconnected
-	    // tell the handler that we're connected
+			// tell the handler that we're connected
 	    this.handlers.onConnected();
 	  }
 	}

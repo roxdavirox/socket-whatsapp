@@ -75,7 +75,7 @@ module.exports = function (WhatsAppWeb) {
   WhatsAppWeb.prototype.validateNewConnection = function (json) {
     if (json.connected) { // only if we're connected
       if (!json.secret) { // if we didn't get a secret, that is we don't need it
-        return this.didConnectSuccessfully();
+        return this.didConnectSuccessfully(json);
       }
       const secret = Buffer.from(json.secret, 'base64');
 
