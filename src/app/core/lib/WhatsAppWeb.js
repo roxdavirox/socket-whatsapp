@@ -80,8 +80,10 @@ class WhatsAppWeb {
 	  } else if (this.handlers.onConnected) {
 			// armazena os dados da conexão do qrcode sem os dados da criptografia
 			// refresh token
-	    this.authInfo.serverToken = json.serverToken;
-	    this.authInfo.clientToken = json.clientToken;
+			if (json && json.serverToken && json.clientToken) {
+				this.authInfo.serverToken = json.serverToken;
+				this.authInfo.clientToken = json.clientToken;
+			}
 	    // if we connected for the first time, i.e. not after being disconnected
 			// tell the handler that we're connected
 	    this.handlers.onConnected();
