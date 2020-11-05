@@ -7,6 +7,7 @@ const sharp = require('sharp');
 const VideoThumb = require('video-thumb');
 const fs = require('fs');
 const { v1: uuid } = require('uuid');
+const musicMetadata = require('music-metadata');
 /*
     Basic cryptographic utilities to interact with WhatsApp servers
 */
@@ -122,5 +123,10 @@ module.exports = {
   getRandomFileName(extension) {
     const randomFileName = `${uuid()}.${extension}`;
     return randomFileName;
+  },
+
+  async getAudioDuration(buffer) {
+    const metadata = await musicMetadata.parseBuffer(buffer, null, { duration: true });
+    return metadata.format.duration;
   },
 };
