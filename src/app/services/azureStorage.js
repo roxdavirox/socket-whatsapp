@@ -27,6 +27,10 @@ async function uploadVideo(file, fileName = uuid()) {
   return await uploadFile(file, fileName, 'videos');
 }
 
+async function uploadAudio(file, fileName = uuid()) {
+  return await uploadFile(file, fileName, 'audios');
+}
+
 async function uploadFile(file, fileName, containerName) {
   const sharedKey = new StorageSharedKeyCredential(account, accountAccessKey);
   const azureUrl = `https://${account}.blob.core.windows.net`;
@@ -49,4 +53,5 @@ module.exports = {
   uploadFile,
   uploadDocument,
   uploadVideo,
+  uploadAudio,
 };
