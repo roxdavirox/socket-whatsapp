@@ -95,7 +95,7 @@ module.exports = function (WhatsAppWeb) {
       imageMessage: 'image/jpeg',
       videoMessage: 'video/mp4',
       documentMessage: 'appliction/pdf',
-      audioMessage: 'audio/ogg; codecs=opus',
+      audioMessage: 'audio/mp4',
       stickerMessage: 'image/webp',
     };
     if (!info) {
@@ -150,7 +150,7 @@ module.exports = function (WhatsAppWeb) {
         }
         throw `UPLOAD FAILED GOT: ${JSON.stringify(json)}`;
       })
-      .then((url) => {
+      .then(async (url) => {
         const message = {};
         message[mediaType] = {
           caption: info.caption,
@@ -163,6 +163,10 @@ module.exports = function (WhatsAppWeb) {
           fileLength: buffer.length,
           jpegThumbnail: info.thumbnail,
         };
+        if (mediaType === 'audioMessage') {
+          message[mediaType].ptt = true;
+          message[mediaType].secods = await Utils.getAudioDuration(buffer);
+        }
         if (mediaType === WhatsAppWeb.MessageType.video && info.gif) {
           message[mediaType].gifPlayback = info.gif;
         }
