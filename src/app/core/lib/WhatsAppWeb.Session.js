@@ -108,7 +108,6 @@ module.exports = function (WhatsAppWeb) {
           clientID: this.authInfo.clientID,
         };
 
-
         this.status = Status.CONNECTED;
 
         this.didConnectSuccessfully();
@@ -165,6 +164,11 @@ module.exports = function (WhatsAppWeb) {
   };
   // send a keep alive request every 25 seconds, server updates & responds with last seen
   WhatsAppWeb.prototype.startKeepAliveRequest = function () {
+    if (this.keepAliveReq) {
+      // clear if exists
+      clearInterval(this.keepAliveReq);
+    }
+
     this.keepAliveReq = setInterval(() => {
       const diff = (new Date().getTime() - this.lastSeen.getTime()) / 1000;
       /*
