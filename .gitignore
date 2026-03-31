@@ -1,5 +1,7 @@
 node_modules
+dist
 auth_info.json
+auth_sessions/
 test_pvt.js
 media_decode_tests.js
 *.mp4
