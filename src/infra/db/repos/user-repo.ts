@@ -31,7 +31,8 @@ export const createUserRepo = (db: DrizzleClient): UserRepo => ({
   add: (user) =>
     tryCatchAsync(async (u: typeof user) => {
       const [row] = await db.insert(users).values(u).returning({ id: users.id })
-      return row!.id
+      if (!row) throw new Error('Insert returned no row')
+      return row.id
     })(user),
 
   update: (id, data) =>

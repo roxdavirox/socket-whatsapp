@@ -26,7 +26,8 @@ export const createChatRepo = (db: DrizzleClient): ChatRepo => ({
   add: (chat) =>
     tryCatchAsync(async (c: CreateChat) => {
       const [row] = await db.insert(chats).values(c).returning({ id: chats.id })
-      return row!.id
+      if (!row) throw new Error('Insert returned no row')
+      return row.id
     })(chat),
 
   updateStatus: (id, status) =>

@@ -29,7 +29,8 @@ export const createContactRepo = (db: DrizzleClient): ContactRepo => ({
   add: (contact) =>
     tryCatchAsync(async (c: typeof contact) => {
       const [row] = await db.insert(contacts).values(c).returning({ id: contacts.id })
-      return row!.id
+      if (!row) throw new Error('Insert returned no row')
+      return row.id
     })(contact),
 
   update: (id, data) =>

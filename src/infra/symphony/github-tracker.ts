@@ -1,4 +1,4 @@
-import { tryCatchAsync, isOk, pipe } from '@tecnomancy/alchemy'
+import { tryCatchAsync, isOk, pipe, Ok, Err, type Result } from '@tecnomancy/alchemy'
 import type { IssueTracker as SymphonyTracker, IssueStateSnapshot } from 'symphony-ts'
 import type { Issue as SymphonyIssue } from 'symphony-ts'
 
@@ -66,21 +66,29 @@ const buildHeaders = (token: string) => ({
 const buildUrl = (owner: string, repo: string) => (path: string) =>
   `https://api.github.com/repos/${owner}/${repo}${path}`
 
-const fetchGitHub = (config: GitHubTrackerConfig) => (path: string) =>
-  tryCatchAsync(async (p: string) => {
-    const url = pipe(p, buildUrl(config.owner, config.repo))
-    const res = await fetch(url, { headers: buildHeaders(config.token) })
-    if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`)
-    return res.json() as Promise<GitHubIssue[]>
-  })(path)
+const safeFetch = async (url: string, token: string): Promise<Result<Response, Error>> => {
+  const result = await tryCatchAsync(async (u: string) =>
+    fetch(u, { headers: buildHeaders(token) })
+  )(url)
+  if (!isOk(result)) return result
+  return result.value.ok
+    ? Ok(result.value)
+    : Err(new Error(`GitHub API ${result.value.status}`))
+}
 
-const fetchOneGitHub = (config: GitHubTrackerConfig) => (path: string) =>
-  tryCatchAsync(async (p: string) => {
-    const url = pipe(p, buildUrl(config.owner, config.repo))
-    const res = await fetch(url, { headers: buildHeaders(config.token) })
-    if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`)
-    return res.json() as Promise<GitHubIssue>
-  })(path)
+const fetchGitHub = (config: GitHubTrackerConfig) => async (path: string): Promise<Result<GitHubIssue[], Error>> => {
+  const url = pipe(path, buildUrl(config.owner, config.repo))
+  const res = await safeFetch(url, config.token)
+  if (!isOk(res)) return res
+  return tryCatchAsync(async (r: Response) => r.json() as Promise<GitHubIssue[]>)(res.value)
+}
+
+const fetchOneGitHub = (config: GitHubTrackerConfig) => async (path: string): Promise<Result<GitHubIssue, Error>> => {
+  const url = pipe(path, buildUrl(config.owner, config.repo))
+  const res = await safeFetch(url, config.token)
+  if (!isOk(res)) return res
+  return tryCatchAsync(async (r: Response) => r.json() as Promise<GitHubIssue>)(res.value)
+}
 
 const buildLabelParam = (labels?: readonly string[]) =>
   labels?.length ? `&labels=${labels.join(',')}` : ''
@@ -89,7 +97,7 @@ const resolveGhState = (stateNames: readonly string[]) =>
   stateNames.some(s => s.toLowerCase() === 'done') ? 'closed' : 'open'
 
 const fetchAndMap = (config: GitHubTrackerConfig) => async (path: string) => {
-  const result = await pipe(path, fetchGitHub(config))
+  const result = await fetchGitHub(config)(path)
   return isOk(result) ? result.value.map(toSymphonyIssue) : []
 }
 
@@ -105,7 +113,7 @@ export const createGitHubTracker = (config: GitHubTrackerConfig): SymphonyTracke
   fetchIssueStatesByIds: (issueIds) =>
     Promise.all(
       issueIds.map(async (id) => {
-        const result = await pipe(`/issues/${id}`, fetchOneGitHub(config))
+        const result = await fetchOneGitHub(config)(`/issues/${id}`)
         return isOk(result) ? toStateSnapshot(result.value) : unknownSnapshot(id)
       }),
     ),

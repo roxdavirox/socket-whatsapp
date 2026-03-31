@@ -31,6 +31,7 @@ export const createMessageRepo = (db: DrizzleClient): MessageRepo => ({
   add: (message) =>
     tryCatchAsync(async (m: CreateMessage) => {
       const [row] = await db.insert(messages).values(m).returning({ id: messages.id })
-      return row!.id
+      if (!row) throw new Error('Insert returned no row')
+      return row.id
     })(message),
 })

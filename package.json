@@ -4,6 +4,9 @@
   "description": "WhatsApp AI Agent Platform — composable agent pipelines over Baileys multi-device",
   "type": "module",
   "main": "dist/main.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/main.ts",
