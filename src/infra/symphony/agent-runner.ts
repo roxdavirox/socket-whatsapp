@@ -103,34 +103,29 @@ export const createAnthropicAgentRunner = (deps: AgentRunnerDeps): AgentRunnerLi
     if (!isOk(workspace)) throw new Error(`Workspace failed: ${workspace.error.message}`)
 
     const runAttempt = toRunAttempt(issue, workspace.value, attempt)
-    const emit = mkEvent({
+    const eventBase = {
       issueId: issue.id,
       issueIdentifier: issue.identifier,
       attempt,
       workspacePath: workspace.value.path,
       turnCount: 0,
-    })
+    }
+    const emit = mkEvent(eventBase)
 
     onEvent?.(emit('session_started'))
 
     const prompt = buildPrompt(issue)
-    const result = await pipe(
-      runAnthropicAgent(ai, logger),
-      (run) => run(workspace.value, prompt),
-    )
+    const result = await runAnthropicAgent(ai, logger)(workspace.value, prompt)
 
     const succeeded = isOk(result)
-    onEvent?.(mkEvent({ ...emit('session_started'), turnCount: 1 })(
+    onEvent?.(mkEvent({ ...eventBase, turnCount: 1 })(
       succeeded ? 'turn_completed' : 'turn_failed',
     ))
 
     return {
       issue,
       workspace: workspace.value,
-      runAttempt: pipe(
-        { ...runAttempt, status: succeeded ? 'succeeded' as const : 'failed' as const },
-        (ra) => ra,
-      ),
+      runAttempt: { ...runAttempt, status: succeeded ? 'succeeded' as const : 'failed' as const },
       liveSession: createEmptyLiveSession(),
       turnsCompleted: succeeded ? 1 : 0,
       lastTurn: null,

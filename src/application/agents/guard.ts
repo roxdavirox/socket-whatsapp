@@ -10,13 +10,17 @@ const SPAM_PATTERNS = [
   /wa\.me\/\d+.*promo/i,
 ]
 
+const matchesAny = (patterns: readonly RegExp[]) => (text: string) =>
+  patterns.some(p => p.test(text))
+
+const isSpam = matchesAny(SPAM_PATTERNS)
+
 export const createGuardAgent = (ai: AIProvider): Agent =>
   async (ctx) => {
     const text = ctx.message.text
     if (!text) return Ok({ type: 'pass' as const, context: ctx })
 
-    const isSpam = SPAM_PATTERNS.some(p => p.test(text))
-    if (isSpam) return Ok({ type: 'block' as const, reason: 'spam_pattern' })
+    if (isSpam(text)) return Ok({ type: 'block' as const, reason: 'spam_pattern' })
 
     const analysis = await tryCatchAsync(async (t: string) =>
       ai.analyze({

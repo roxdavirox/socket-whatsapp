@@ -5,6 +5,14 @@ import { handleQRCodeNamespace } from './handlers/qrcode.js'
 import { handleChatNamespace } from './handlers/chat.js'
 import type { Dependencies } from '../../config/container.js'
 import type { ServerToClientEvents, ClientToServerEvents } from './events.js'
+import type { Socket } from 'socket.io'
+
+type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>
+
+const bindHandler = (
+  handler: (socket: TypedSocket, deps: Dependencies) => void,
+  deps: Dependencies,
+) => (socket: TypedSocket) => handler(socket, deps)
 
 export const createSocketServer = (httpServer: HttpServer, deps: Dependencies) => {
   const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
@@ -23,10 +31,10 @@ export const createSocketServer = (httpServer: HttpServer, deps: Dependencies) =
   })
 
   const qrNamespace = io.of('/qr')
-  qrNamespace.on('connection', (socket) => handleQRCodeNamespace(socket as never, deps))
+  qrNamespace.on('connection', bindHandler(handleQRCodeNamespace, deps))
 
   const chatNamespace = io.of('/chat')
-  chatNamespace.on('connection', (socket) => handleChatNamespace(socket as never, deps))
+  chatNamespace.on('connection', bindHandler(handleChatNamespace, deps))
 
   deps.eventBus.on('message.received', (event) => {
     const room = event.contact.assignedUserId ?? event.contact.ownerId

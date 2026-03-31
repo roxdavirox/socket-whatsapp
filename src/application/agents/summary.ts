@@ -1,6 +1,7 @@
 import { Ok, isOk, tryCatchAsync } from '@tecnomancy/alchemy'
 import type { Agent } from './types.js'
 import type { AIProvider } from '../../domain/ports/ai-provider.js'
+import { formatFullHistory } from './shared.js'
 
 const SUMMARY_THRESHOLD = 20
 
@@ -10,9 +11,7 @@ export const createSummaryAgent = (ai: AIProvider): Agent =>
       return Ok({ type: 'pass' as const, context: ctx })
     }
 
-    const historyText = ctx.history
-      .map(m => `${m.direction === 'incoming' ? 'User' : 'Bot'}: ${m.text ?? '[media]'}`)
-      .join('\n')
+    const historyText = formatFullHistory(ctx.history)
 
     const summary = await tryCatchAsync(async (h: string) =>
       ai.analyze({

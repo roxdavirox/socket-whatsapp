@@ -1,12 +1,7 @@
 import { Ok, isOk, tryCatchAsync, tryCatch, pipe, fromNullable, mapOption, toNullable } from '@tecnomancy/alchemy'
 import type { Agent } from './types.js'
 import type { AIProvider } from '../../domain/ports/ai-provider.js'
-
-const formatHistory = (history: readonly { direction: string; text: string | null }[]) =>
-  history
-    .slice(-10)
-    .map(m => `${m.direction === 'incoming' ? 'User' : 'Bot'}: ${m.text ?? '[media]'}`)
-    .join('\n')
+import { formatHistory } from './shared.js'
 
 const trySafeJsonParse = (str: string): Record<string, unknown> | null =>
   pipe(

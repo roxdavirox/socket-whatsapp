@@ -39,14 +39,16 @@ if (deps.symphony) {
     .catch((err: unknown) => deps.logger.error({ err }, 'Symphony startup error'))
 }
 
+const chainAsync = <T>(fn: (x: T) => Promise<unknown>) =>
+  (acc: Promise<void>, x: T): Promise<void> => acc.then(() => { fn(x) })
+
+const removeSession = (ownerId: string) => deps.sessionManager.remove(ownerId)
+
 const shutdown = async () => {
   deps.logger.info('Shutting down...')
   if (deps.symphony) await deps.symphony.stop()
   const sessions = [...deps.sessionManager.getAll().keys()]
-  await sessions.reduce(
-    (acc, ownerId) => acc.then(async () => { await deps.sessionManager.remove(ownerId) }),
-    Promise.resolve(),
-  )
+  await sessions.reduce(chainAsync(removeSession), Promise.resolve())
   httpServer.close()
   process.exit(0)
 }

@@ -1,22 +1,32 @@
-import { Ok, Err, isOk, type Result } from '@tecnomancy/alchemy'
+import { Ok, Err, isOk, pipe, type Result } from '@tecnomancy/alchemy'
 import { parseJid } from '../../domain/value-objects/jid.js'
-import type { CreateMessage, MessageType } from '../../domain/entities/message.js'
+import type { CreateMessage, MessageType, MessageDirection } from '../../domain/entities/message.js'
 import type { proto } from '@whiskeysockets/baileys'
 
 type BaileysMessage = proto.IWebMessageInfo
 
-const resolveMessageType = (msg: BaileysMessage): MessageType => {
-  const content = msg.message
-  if (!content) return 'text'
-  if (content.imageMessage) return 'image'
-  if (content.videoMessage) return 'video'
-  if (content.audioMessage) return 'audio'
-  if (content.documentMessage) return 'document'
-  if (content.stickerMessage) return 'sticker'
-  if (content.locationMessage) return 'location'
-  if (content.contactMessage) return 'contact'
-  return 'text'
-}
+type ContentCheck = readonly [(msg: NonNullable<BaileysMessage['message']>) => unknown, MessageType]
+
+const CONTENT_CHECKS: ContentCheck[] = [
+  [c => c.imageMessage, 'image'],
+  [c => c.videoMessage, 'video'],
+  [c => c.audioMessage, 'audio'],
+  [c => c.documentMessage, 'document'],
+  [c => c.stickerMessage, 'sticker'],
+  [c => c.locationMessage, 'location'],
+  [c => c.contactMessage, 'contact'],
+]
+
+const resolveMessageType = (msg: BaileysMessage): MessageType =>
+  pipe(
+    msg.message,
+    (content) => content
+      ? CONTENT_CHECKS.find(([check]) => check(content))?.[1] ?? 'text'
+      : 'text',
+  )
+
+const resolveDirection = (fromMe: boolean | null | undefined): MessageDirection =>
+  fromMe ? 'outgoing' : 'incoming'
 
 const extractText = (msg: BaileysMessage): string | null =>
   msg.message?.conversation
@@ -27,7 +37,7 @@ const extractText = (msg: BaileysMessage): string | null =>
 
 export const mapBaileysMessage = (
   raw: BaileysMessage,
-  ownerId: string
+  ownerId: string,
 ): Result<CreateMessage, Error> => {
   const remoteJid = raw.key?.remoteJid
   if (!remoteJid) return Err(new Error('Missing remoteJid'))
@@ -40,7 +50,7 @@ export const mapBaileysMessage = (
     contactJid: jidResult.value,
     ownerId,
     type: resolveMessageType(raw),
-    direction: raw.key?.fromMe ? 'outgoing' : 'incoming',
+    direction: resolveDirection(raw.key?.fromMe),
     text: extractText(raw),
     mediaUrl: null,
     mimetype: null,

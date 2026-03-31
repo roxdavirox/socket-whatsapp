@@ -55,7 +55,7 @@ export const createBaileysClient = (
     })
 
     sock.ev.on('messages.upsert', ({ messages: msgs }) => {
-      msgs.forEach(m => events.onMessage(m))
+      msgs.forEach(events.onMessage)
     })
 
     const client: WAClient = {
