@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { Ok, isOk, Some, None, fromNullable } from '@tecnomancy/alchemy'
+import { Ok, isOk, None } from '@tecnomancy/alchemy'
 import { createRoutingAgent } from './routing.js'
 import type { AgentContext } from './types.js'
 import type { UserRepo } from '../../domain/ports/user-repo.js'
 
 const mkCtx = (assignedUserId: string | null = null): AgentContext => ({
   message: { id: '1', chatId: 'c1', contactJid: '5511@s.whatsapp.net' as never, ownerId: 'o1', type: 'text', direction: 'incoming', text: 'hi', mediaUrl: null, mimetype: null, metadata: {}, timestamp: new Date() },
-  contact: { id: 'ct1', jid: '5511@s.whatsapp.net' as never, ownerId: 'o1', assignedUserId, name: null, pushName: null, status: 'active' },
+  contact: { id: 'ct1', jid: '5511@s.whatsapp.net' as never, ownerId: 'o1', assignedUserId, name: null, pushName: null, status: 'active', createdAt: new Date(), updatedAt: new Date() },
   history: [],
   ownerId: 'o1',
   metadata: {},
@@ -15,8 +15,10 @@ const mkCtx = (assignedUserId: string | null = null): AgentContext => ({
 const mkUserRepo = (operators: { id: string; name: string }[] = []): UserRepo => ({
   getByEmail: async () => Ok(None),
   getById: async () => Ok(None),
+  getAll: async () => Ok([]),
   getOperators: async () => Ok(operators as never),
   add: async () => Ok(''),
+  update: async () => Ok(undefined),
 })
 
 describe('createRoutingAgent', () => {

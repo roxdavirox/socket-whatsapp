@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { Ok, Err, isOk, isErr } from '@tecnomancy/alchemy'
+import { Ok, Err, isOk } from '@tecnomancy/alchemy'
 import { createPipeline } from './pipeline.js'
 import type { Agent, AgentContext } from './types.js'
 
 const mkCtx = (overrides?: Partial<AgentContext>): AgentContext => ({
   message: { id: '1', chatId: 'c1', contactJid: '5511@s.whatsapp.net' as never, ownerId: 'o1', type: 'text', direction: 'incoming', text: 'hi', mediaUrl: null, mimetype: null, metadata: {}, timestamp: new Date() },
-  contact: { id: 'ct1', jid: '5511@s.whatsapp.net' as never, ownerId: 'o1', assignedUserId: null, name: null, pushName: null, status: 'active' },
+  contact: { id: 'ct1', jid: '5511@s.whatsapp.net' as never, ownerId: 'o1', assignedUserId: null, name: null, pushName: null, status: 'active', createdAt: new Date(), updatedAt: new Date() },
   history: [],
   ownerId: 'o1',
   metadata: {},

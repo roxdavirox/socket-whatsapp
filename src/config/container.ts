@@ -1,6 +1,8 @@
 import { isOk, Ok, Err, type Result } from '@tecnomancy/alchemy'
+import { createContainer as createIoC, type Container } from './ioc.js'
+import { Tokens } from './tokens.js'
 import type { Env } from './env.js'
-import { createLogger, type Logger } from './logger.js'
+import { createLogger } from './logger.js'
 import { createDbClient, type DrizzleClient } from '../infra/db/client.js'
 import { createUserRepo } from '../infra/db/repos/user-repo.js'
 import { createContactRepo } from '../infra/db/repos/contact-repo.js'
@@ -12,42 +14,42 @@ import { createAzureStorage } from '../infra/storage/azure-blob.js'
 import { createOpenAIProvider } from '../infra/ai/openai.js'
 import { createAnthropicProvider } from '../infra/ai/anthropic.js'
 import { createOllamaProvider } from '../infra/ai/ollama.js'
-import { createEventBus, type EventBus } from '../application/event-bus.js'
-import { createSessionManager, type SessionManager } from '../application/services/session-manager.js'
-import { createAuthenticate, type Authenticate } from '../application/use-cases/authenticate.js'
-import { createManageSession, type ManageSession } from '../application/use-cases/manage-session.js'
+import { createEventBus } from '../application/event-bus.js'
+import { createSessionManager } from '../application/services/session-manager.js'
+import { createAuthenticate } from '../application/use-cases/authenticate.js'
+import { createManageSession } from '../application/use-cases/manage-session.js'
 import { createHandleIncomingMessage } from '../application/use-cases/handle-incoming-message.js'
 import { createSendMessage } from '../application/use-cases/send-message.js'
 import { createSendMedia } from '../application/use-cases/send-media.js'
-import { createSymphonyOrchestrator, type SymphonyOrchestrator } from '../infra/symphony/orchestrator.js'
-import type { UserRepo } from '../domain/ports/user-repo.js'
-import type { ContactRepo } from '../domain/ports/contact-repo.js'
-import type { ChatRepo } from '../domain/ports/chat-repo.js'
-import type { MessageRepo } from '../domain/ports/message-repo.js'
-import type { SessionStore } from '../domain/ports/session-store.js'
-import type { FileStorage } from '../domain/ports/file-storage.js'
+import { createSymphonyOrchestrator } from '../infra/symphony/orchestrator.js'
 import type { AIProvider } from '../domain/ports/ai-provider.js'
+import type { FileStorage } from '../domain/ports/file-storage.js'
+
+// --- Dependencies facade (preserves existing consumer API) ---
 
 export type Dependencies = {
   readonly env: Env
-  readonly logger: Logger
+  readonly logger: ReturnType<typeof createLogger>
   readonly db: DrizzleClient
-  readonly eventBus: EventBus
-  readonly userRepo: UserRepo
-  readonly contactRepo: ContactRepo
-  readonly chatRepo: ChatRepo
-  readonly messageRepo: MessageRepo
-  readonly sessionStore: SessionStore
+  readonly eventBus: ReturnType<typeof createEventBus>
+  readonly userRepo: ReturnType<typeof createUserRepo>
+  readonly contactRepo: ReturnType<typeof createContactRepo>
+  readonly chatRepo: ReturnType<typeof createChatRepo>
+  readonly messageRepo: ReturnType<typeof createMessageRepo>
+  readonly sessionStore: ReturnType<typeof createSessionStore>
   readonly fileStorage: FileStorage
   readonly ai: AIProvider
-  readonly sessionManager: SessionManager
-  readonly authenticate: Authenticate
-  readonly manageSession: ManageSession
+  readonly sessionManager: ReturnType<typeof createSessionManager>
+  readonly authenticate: ReturnType<typeof createAuthenticate>
+  readonly manageSession: ReturnType<typeof createManageSession>
   readonly handleIncomingMessage: (raw: unknown, ownerId: string) => Promise<void>
   readonly sendMessage: ReturnType<typeof createSendMessage>
   readonly sendMedia: ReturnType<typeof createSendMedia>
-  readonly symphony: SymphonyOrchestrator | null
+  readonly symphony: ReturnType<typeof createSymphonyOrchestrator> | null
+  readonly container: Container
 }
+
+// --- resolvers (pure functions, no side effects) ---
 
 const noopAI: AIProvider = {
   analyze: async () => Ok('{"classification":"safe","confidence":1}'),
@@ -62,7 +64,16 @@ const resolveAI = (env: Env): AIProvider => {
   }
 }
 
-const resolveSymphony = (env: Env, ai: AIProvider, logger: Logger): SymphonyOrchestrator | null => {
+const resolveStorage = (env: Env): FileStorage =>
+  env.AZURE_STORAGE_ACCOUNT_NAME && env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY
+    ? createAzureStorage({
+        accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
+        accountKey: env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY,
+        containerName: env.AZURE_STORAGE_CONTAINER,
+      })
+    : createLocalStorage(env.LOCAL_STORAGE_DIR)
+
+const resolveSymphony = (env: Env, ai: AIProvider, logger: ReturnType<typeof createLogger>) => {
   if (!env.SYMPHONY_ENABLED || !env.SYMPHONY_GITHUB_OWNER || !env.SYMPHONY_GITHUB_REPO || !env.SYMPHONY_GITHUB_TOKEN) {
     return null
   }
@@ -81,62 +92,95 @@ const resolveSymphony = (env: Env, ai: AIProvider, logger: Logger): SymphonyOrch
   }, ai, logger)
 }
 
-const resolveStorage = (env: Env): FileStorage => {
-  if (env.AZURE_STORAGE_ACCOUNT_NAME && env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY) {
-    return createAzureStorage({
-      accountName: env.AZURE_STORAGE_ACCOUNT_NAME,
-      accountKey: env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY,
-      containerName: env.AZURE_STORAGE_CONTAINER,
-    })
-  }
-  return createLocalStorage(env.LOCAL_STORAGE_DIR)
+// --- IoC registration ---
+
+const registerCore = (ioc: Container, env: Env, db: DrizzleClient) => {
+  ioc.register(Tokens.Env, () => env)
+  ioc.register(Tokens.Logger, (r) => createLogger(r(Tokens.Env)))
+  ioc.register(Tokens.Db, () => db)
+  ioc.register(Tokens.EventBus, () => createEventBus())
 }
 
+const registerRepos = (ioc: Container) => {
+  ioc.register(Tokens.UserRepo, (r) => createUserRepo(r(Tokens.Db)))
+  ioc.register(Tokens.ContactRepo, (r) => createContactRepo(r(Tokens.Db)))
+  ioc.register(Tokens.ChatRepo, (r) => createChatRepo(r(Tokens.Db)))
+  ioc.register(Tokens.MessageRepo, (r) => createMessageRepo(r(Tokens.Db)))
+  ioc.register(Tokens.SessionStore, (r) => createSessionStore(r(Tokens.Db)))
+}
+
+const registerInfra = (ioc: Container) => {
+  ioc.register(Tokens.FileStorage, (r) => resolveStorage(r(Tokens.Env)))
+  ioc.register(Tokens.AI, (r) => resolveAI(r(Tokens.Env)))
+  ioc.register(Tokens.Symphony, (r) => resolveSymphony(r(Tokens.Env), r(Tokens.AI), r(Tokens.Logger)))
+}
+
+const registerServices = (ioc: Container) => {
+  ioc.register(Tokens.SessionManager, (r) =>
+    createSessionManager(r(Tokens.SessionStore), r(Tokens.EventBus), r(Tokens.Logger)),
+  )
+}
+
+const registerUseCases = (ioc: Container, toDeps: () => Dependencies) => {
+  ioc.register(Tokens.Authenticate, () => createAuthenticate(toDeps()))
+  ioc.register(Tokens.ManageSession, () => createManageSession(toDeps()))
+  ioc.register(Tokens.HandleIncomingMessage, () => createHandleIncomingMessage(toDeps()))
+  ioc.register(Tokens.SendMessage, () => createSendMessage(toDeps()))
+  ioc.register(Tokens.SendMedia, () => createSendMedia(toDeps()))
+}
+
+// --- facade: builds Dependencies from IoC ---
+
+const buildFacade = (ioc: Container): Dependencies => {
+  const facade: Dependencies = Object.create(null)
+  const toDeps = () => facade
+
+  registerUseCases(ioc, toDeps)
+
+  const props: Record<string, PropertyDescriptor> = {}
+  const entries: [string, symbol][] = [
+    ['env', Tokens.Env],
+    ['logger', Tokens.Logger],
+    ['db', Tokens.Db],
+    ['eventBus', Tokens.EventBus],
+    ['userRepo', Tokens.UserRepo],
+    ['contactRepo', Tokens.ContactRepo],
+    ['chatRepo', Tokens.ChatRepo],
+    ['messageRepo', Tokens.MessageRepo],
+    ['sessionStore', Tokens.SessionStore],
+    ['fileStorage', Tokens.FileStorage],
+    ['ai', Tokens.AI],
+    ['sessionManager', Tokens.SessionManager],
+    ['authenticate', Tokens.Authenticate],
+    ['manageSession', Tokens.ManageSession],
+    ['handleIncomingMessage', Tokens.HandleIncomingMessage],
+    ['sendMessage', Tokens.SendMessage],
+    ['sendMedia', Tokens.SendMedia],
+    ['symphony', Tokens.Symphony],
+  ]
+
+  entries.forEach(([key, token]) => {
+    props[key] = { get: () => ioc.resolve(token as never), enumerable: true }
+  })
+
+  props['container'] = { value: ioc, enumerable: false }
+
+  Object.defineProperties(facade, props)
+  return facade
+}
+
+// --- public API ---
+
 export const createContainer = (env: Env): Result<Dependencies, Error> => {
-  const logger = createLogger(env)
   const dbResult = createDbClient(env.DATABASE_URL)
   if (!isOk(dbResult)) return Err(dbResult.error)
 
-  const { db } = dbResult.value
-  const eventBus = createEventBus()
+  const ioc = createIoC()
 
-  const userRepo = createUserRepo(db)
-  const contactRepo = createContactRepo(db)
-  const chatRepo = createChatRepo(db)
-  const messageRepo = createMessageRepo(db)
-  const sessionStore = createSessionStore(db)
-  const fileStorage = resolveStorage(env)
-  const ai = resolveAI(env)
+  registerCore(ioc, env, dbResult.value.db)
+  registerRepos(ioc)
+  registerInfra(ioc)
+  registerServices(ioc)
 
-  const lazy = <T>(init: () => T): (() => T) => {
-    let cached: T | undefined
-    return () => (cached ??= init())
-  }
-
-  const deps: Dependencies = Object.create(null)
-  const self = () => deps
-
-  Object.assign(deps, {
-    env, logger, db, eventBus,
-    userRepo, contactRepo, chatRepo, messageRepo,
-    sessionStore, fileStorage, ai,
-    sessionManager: createSessionManager(sessionStore, eventBus, logger),
-    symphony: resolveSymphony(env, ai, logger),
-  })
-
-  const lazyAuthenticate = lazy(() => createAuthenticate(self()))
-  const lazyManageSession = lazy(() => createManageSession(self()))
-  const lazyHandleIncoming = lazy(() => createHandleIncomingMessage(self()))
-  const lazySendMessage = lazy(() => createSendMessage(self()))
-  const lazySendMedia = lazy(() => createSendMedia(self()))
-
-  Object.defineProperties(deps, {
-    authenticate: { get: lazyAuthenticate, enumerable: true },
-    manageSession: { get: lazyManageSession, enumerable: true },
-    handleIncomingMessage: { get: lazyHandleIncoming, enumerable: true },
-    sendMessage: { get: lazySendMessage, enumerable: true },
-    sendMedia: { get: lazySendMedia, enumerable: true },
-  })
-
-  return Ok(deps)
+  return Ok(buildFacade(ioc))
 }

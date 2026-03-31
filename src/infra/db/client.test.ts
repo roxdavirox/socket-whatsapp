@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isOk, isErr } from '@tecnomancy/alchemy'
+import { isOk } from '@tecnomancy/alchemy'
 import { createDbClient } from './client.js'
 
 describe('createDbClient', () => {
