@@ -19,6 +19,7 @@ import { createManageSession, type ManageSession } from '../application/use-case
 import { createHandleIncomingMessage } from '../application/use-cases/handle-incoming-message.js'
 import { createSendMessage } from '../application/use-cases/send-message.js'
 import { createSendMedia } from '../application/use-cases/send-media.js'
+import { createSymphonyOrchestrator, type SymphonyOrchestrator } from '../infra/symphony/orchestrator.js'
 import type { UserRepo } from '../domain/ports/user-repo.js'
 import type { ContactRepo } from '../domain/ports/contact-repo.js'
 import type { ChatRepo } from '../domain/ports/chat-repo.js'
@@ -45,6 +46,7 @@ export type Dependencies = {
   readonly handleIncomingMessage: (raw: unknown, ownerId: string) => Promise<void>
   readonly sendMessage: ReturnType<typeof createSendMessage>
   readonly sendMedia: ReturnType<typeof createSendMedia>
+  readonly symphony: SymphonyOrchestrator | null
 }
 
 const noopAI: AIProvider = {
@@ -58,6 +60,25 @@ const resolveAI = (env: Env): AIProvider => {
     case 'ollama': return createOllamaProvider(env.OLLAMA_URL)
     case 'none': return noopAI
   }
+}
+
+const resolveSymphony = (env: Env, ai: AIProvider, logger: Logger): SymphonyOrchestrator | null => {
+  if (!env.SYMPHONY_ENABLED || !env.SYMPHONY_GITHUB_OWNER || !env.SYMPHONY_GITHUB_REPO || !env.SYMPHONY_GITHUB_TOKEN) {
+    return null
+  }
+  return createSymphonyOrchestrator({
+    workflowPath: env.SYMPHONY_WORKFLOW_PATH,
+    github: {
+      owner: env.SYMPHONY_GITHUB_OWNER,
+      repo: env.SYMPHONY_GITHUB_REPO,
+      token: env.SYMPHONY_GITHUB_TOKEN,
+      activeLabels: env.SYMPHONY_GITHUB_LABELS?.split(',').map(l => l.trim()),
+    },
+    workspace: { root: env.SYMPHONY_WORKSPACE_ROOT },
+    maxConcurrentAgents: env.SYMPHONY_MAX_AGENTS,
+    pollIntervalMs: env.SYMPHONY_POLL_INTERVAL_MS,
+    port: env.SYMPHONY_DASHBOARD_PORT,
+  }, ai, logger)
 }
 
 const resolveStorage = (env: Env): FileStorage => {
@@ -100,6 +121,7 @@ export const createContainer = (env: Env): Result<Dependencies, Error> => {
     userRepo, contactRepo, chatRepo, messageRepo,
     sessionStore, fileStorage, ai,
     sessionManager: createSessionManager(sessionStore, eventBus, logger),
+    symphony: resolveSymphony(env, ai, logger),
   })
 
   const lazyAuthenticate = lazy(() => createAuthenticate(self()))

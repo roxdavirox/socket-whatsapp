@@ -27,6 +27,17 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 
   CORS_ORIGIN: z.string().default('*'),
+
+  SYMPHONY_ENABLED: z.coerce.boolean().default(false),
+  SYMPHONY_WORKFLOW_PATH: z.string().default('./WORKFLOW.md'),
+  SYMPHONY_GITHUB_OWNER: z.string().optional(),
+  SYMPHONY_GITHUB_REPO: z.string().optional(),
+  SYMPHONY_GITHUB_TOKEN: z.string().optional(),
+  SYMPHONY_GITHUB_LABELS: z.string().optional(),
+  SYMPHONY_WORKSPACE_ROOT: z.string().default('/tmp/symphony-whatsapp'),
+  SYMPHONY_MAX_AGENTS: z.coerce.number().default(3),
+  SYMPHONY_POLL_INTERVAL_MS: z.coerce.number().default(30_000),
+  SYMPHONY_DASHBOARD_PORT: z.coerce.number().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

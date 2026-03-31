@@ -31,8 +31,17 @@ deps.manageSession.restoreAll()
   .then(() => deps.logger.info('Sessions restored'))
   .catch((err: unknown) => deps.logger.error({ err }, 'Failed to restore sessions'))
 
+if (deps.symphony) {
+  deps.symphony.start()
+    .then((r) => isOk(r)
+      ? deps.logger.info('Symphony orchestrator running')
+      : deps.logger.error({ err: r.error }, 'Symphony failed to start'))
+    .catch((err: unknown) => deps.logger.error({ err }, 'Symphony startup error'))
+}
+
 const shutdown = async () => {
   deps.logger.info('Shutting down...')
+  if (deps.symphony) await deps.symphony.stop()
   const sessions = [...deps.sessionManager.getAll().keys()]
   await sessions.reduce(
     (acc, ownerId) => acc.then(async () => { await deps.sessionManager.remove(ownerId) }),
