@@ -36,7 +36,7 @@ export const createGuardAgent = (ai: AIProvider): Agent =>
         ...ctx,
         metadata: {
           ...ctx.metadata,
-          guard: isOk(analysis) ? analysis.value : null,
+          guard: isOk(analysis) && isOk(analysis.value) ? analysis.value.value : null,
         },
       },
     })

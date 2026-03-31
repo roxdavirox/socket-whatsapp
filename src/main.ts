@@ -40,7 +40,7 @@ if (deps.symphony) {
 }
 
 const chainAsync = <T>(fn: (x: T) => Promise<unknown>) =>
-  (acc: Promise<void>, x: T): Promise<void> => acc.then(() => { fn(x) })
+  (acc: Promise<void>, x: T): Promise<void> => acc.then(() => fn(x)).then(() => {})
 
 const removeSession = (ownerId: string) => deps.sessionManager.remove(ownerId)
 

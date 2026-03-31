@@ -12,15 +12,15 @@ export const createManageSession = (deps: Dependencies) => ({
       ownerId,
       {
         onQR,
-        onConnected: () => {
-          deps.sessionStore.updateStatus(ownerId, 'connected')
-          deps.eventBus.emit({ type: 'session.status_changed', ownerId, status: 'connected' })
+        onConnected: async () => {
+          await deps.sessionStore.updateStatus(ownerId, 'connected')
+          await deps.eventBus.emit({ type: 'session.status_changed', ownerId, status: 'connected' })
         },
         onDisconnected: async (reason) => {
           if (reason === 'logged_out') {
-            deps.sessionManager.remove(ownerId)
+            await deps.sessionManager.remove(ownerId)
           }
-          deps.eventBus.emit({ type: 'session.status_changed', ownerId, status: 'disconnected' })
+          await deps.eventBus.emit({ type: 'session.status_changed', ownerId, status: 'disconnected' })
         },
         onMessage: (msg) => {
           deps.handleIncomingMessage(msg, ownerId)
@@ -44,10 +44,8 @@ export const createManageSession = (deps: Dependencies) => ({
     return Ok(undefined)
   },
 
-  disconnect: async (ownerId: string): Promise<Result<void, Error>> => {
-    await deps.sessionManager.remove(ownerId)
-    return Ok(undefined)
-  },
+  disconnect: (ownerId: string): Promise<Result<void, Error>> =>
+    deps.sessionManager.remove(ownerId),
 
   restoreAll: async (): Promise<void> => {
     const sessions = await deps.sessionStore.getAll()

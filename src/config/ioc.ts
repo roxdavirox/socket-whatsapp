@@ -1,4 +1,4 @@
-import { Ok, Err, type Result } from '@tecnomancy/alchemy'
+import { Ok, Err, tryCatch, isOk, type Result } from '@tecnomancy/alchemy'
 
 type Token<T> = symbol & { readonly __type: T }
 
@@ -45,13 +45,10 @@ export const createContainer = (): Container => {
     const cached = singletons.get(token)
     if (cached !== undefined) return Ok(cached as T)
 
-    try {
-      const instance = (reg as Registration<T>).factory(resolve)
-      if (reg.scope === 'singleton') singletons.set(token, instance)
-      return Ok(instance)
-    } catch (e) {
-      return Err(e instanceof Error ? e : new Error(String(e)))
-    }
+    const result = tryCatch(() => (reg as Registration<T>).factory(resolve))()
+    if (!isOk(result)) return result
+    if (reg.scope === 'singleton') singletons.set(token, result.value)
+    return result
   }
 
   return {

@@ -1,12 +1,9 @@
 import { tryCatchAsync, isOk, Ok, Err, pipe, type Result } from '@tecnomancy/alchemy'
 import type { AgentRunnerLike, AgentRunResult, AgentRunnerEvent } from 'symphony-ts'
 import { type Issue, type Workspace, type RunAttempt, createEmptyLiveSession } from 'symphony-ts'
-import { exec } from 'node:child_process'
-import { promisify } from 'node:util'
+import { mkdir } from 'node:fs/promises'
 import type { AIProvider } from '../../domain/ports/ai-provider.js'
 import type { Logger } from '../../config/logger.js'
-
-const execAsync = promisify(exec)
 
 type AgentRunnerConfig = {
   readonly workspaceRoot: string
@@ -68,7 +65,7 @@ const prepareWorkspace = (root: string) => (issue: Issue) =>
   tryCatchAsync(async (iss: Issue) => {
     const key = sanitizeKey(iss.identifier)
     const path = pipe(key, toWorkspacePath(root))
-    await execAsync(`mkdir -p ${path}`)
+    await mkdir(path, { recursive: true })
     return { path, workspaceKey: key, createdNow: true } satisfies Workspace
   })(issue)
 
@@ -100,7 +97,17 @@ export const createAnthropicAgentRunner = (deps: AgentRunnerDeps): AgentRunnerLi
     const { config, ai, logger, onEvent } = deps
 
     const workspace = await pipe(issue, prepareWorkspace(config.workspaceRoot))
-    if (!isOk(workspace)) throw new Error(`Workspace failed: ${workspace.error.message}`)
+    if (!isOk(workspace)) {
+      return {
+        issue,
+        workspace: { path: '', workspaceKey: '', createdNow: false },
+        runAttempt: { issueId: issue.id, issueIdentifier: issue.identifier, attempt, workspacePath: '', startedAt: new Date().toISOString(), status: 'failed' as const, error: workspace.error.message },
+        liveSession: createEmptyLiveSession(),
+        turnsCompleted: 0,
+        lastTurn: null,
+        rateLimits: null,
+      } satisfies AgentRunResult
+    }
 
     const runAttempt = toRunAttempt(issue, workspace.value, attempt)
     const eventBase = {

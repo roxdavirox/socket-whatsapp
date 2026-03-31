@@ -74,6 +74,14 @@ const fetchGitHub = (config: GitHubTrackerConfig) => (path: string) =>
     return res.json() as Promise<GitHubIssue[]>
   })(path)
 
+const fetchOneGitHub = (config: GitHubTrackerConfig) => (path: string) =>
+  tryCatchAsync(async (p: string) => {
+    const url = pipe(p, buildUrl(config.owner, config.repo))
+    const res = await fetch(url, { headers: buildHeaders(config.token) })
+    if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`)
+    return res.json() as Promise<GitHubIssue>
+  })(path)
+
 const buildLabelParam = (labels?: readonly string[]) =>
   labels?.length ? `&labels=${labels.join(',')}` : ''
 
@@ -97,10 +105,8 @@ export const createGitHubTracker = (config: GitHubTrackerConfig): SymphonyTracke
   fetchIssueStatesByIds: (issueIds) =>
     Promise.all(
       issueIds.map(async (id) => {
-        const result = await pipe(`/issues/${id}`, fetchGitHub(config))
-        return isOk(result)
-          ? toStateSnapshot(result.value as unknown as GitHubIssue)
-          : unknownSnapshot(id)
+        const result = await pipe(`/issues/${id}`, fetchOneGitHub(config))
+        return isOk(result) ? toStateSnapshot(result.value) : unknownSnapshot(id)
       }),
     ),
 })

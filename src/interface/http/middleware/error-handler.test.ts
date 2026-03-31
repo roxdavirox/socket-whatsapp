@@ -39,7 +39,7 @@ describe('resultToResponse', () => {
   it('responds 401 on credentials error', () => {
     const res = mkRes()
     resultToResponse(res, Err(new Error('Invalid credentials')))
-    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.status).toHaveBeenCalledWith(401)
   })
 
   it('responds 500 on unknown error', () => {

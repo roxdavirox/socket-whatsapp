@@ -1,4 +1,4 @@
-import { Ok, isOk, tryCatchAsync, tryCatch, pipe, fromNullable, mapOption, toNullable } from '@tecnomancy/alchemy'
+import { Ok, isOk, tryCatchAsync, tryCatch, pipe, fromNullable, flatMapOption, Some, None, toNullable } from '@tecnomancy/alchemy'
 import type { Agent } from './types.js'
 import type { AIProvider } from '../../domain/ports/ai-provider.js'
 import { formatHistory } from './shared.js'
@@ -6,12 +6,12 @@ import { formatHistory } from './shared.js'
 const trySafeJsonParse = (str: string): Record<string, unknown> | null =>
   pipe(
     fromNullable(str.match(/\{[\s\S]*\}/)?.[0]),
-    mapOption((json: string) => {
+    flatMapOption((json: string) => {
       const parsed = tryCatch(() => JSON.parse(json) as Record<string, unknown>)()
-      return isOk(parsed) ? parsed.value : null
+      return isOk(parsed) ? Some(parsed.value) : None
     }),
     toNullable,
-  ) ?? null
+  )
 
 const extractAutoReply = (parsed: Record<string, unknown> | null) =>
   parsed?.shouldAutoReply && parsed.suggestedReply

@@ -73,7 +73,7 @@ export const createSymphonyOrchestrator = (
   ai: AIProvider,
   logger: Logger,
 ): SymphonyOrchestrator => {
-  let handle: RuntimeServiceHandle | null = null
+  const state = { handle: null as RuntimeServiceHandle | null }
 
   return {
     start: () =>
@@ -90,7 +90,7 @@ export const createSymphonyOrchestrator = (
           owner: cfg.github.owner,
           repo: cfg.github.repo,
           token: cfg.github.token,
-          activeLabels: cfg.github.activeLabels as string[],
+          activeLabels: cfg.github.activeLabels,
         })
 
         const agentRunner = createAnthropicAgentRunner({
@@ -113,15 +113,15 @@ export const createSymphonyOrchestrator = (
           }),
         })
 
-        handle = service
+        state.handle = service
         logger.info('Symphony orchestrator started (Anthropic agent)')
         return service
       })(symphonyConfig),
 
     stop: async () => {
-      if (!handle) return
-      await handle.shutdown()
-      handle = null
+      if (!state.handle) return
+      await state.handle.shutdown()
+      state.handle = null
       logger.info('Symphony orchestrator stopped')
     },
   }

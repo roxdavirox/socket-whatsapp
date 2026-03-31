@@ -1,5 +1,4 @@
-import type { Result } from '@tecnomancy/alchemy'
-import type { Option } from '@tecnomancy/alchemy'
+import type { Result, Option } from '@tecnomancy/alchemy'
 import type { Message, CreateMessage } from '../entities/message.js'
 
 export type MessageRepo = {

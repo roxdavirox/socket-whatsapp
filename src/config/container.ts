@@ -137,7 +137,6 @@ const buildFacade = (ioc: Container): Dependencies => {
 
   registerUseCases(ioc, toDeps)
 
-  const props: Record<string, PropertyDescriptor> = {}
   const entries: [string, symbol][] = [
     ['env', Tokens.Env],
     ['logger', Tokens.Logger],
@@ -159,13 +158,17 @@ const buildFacade = (ioc: Container): Dependencies => {
     ['symphony', Tokens.Symphony],
   ]
 
-  entries.forEach(([key, token]) => {
-    props[key] = { get: () => ioc.resolve(token as never), enumerable: true }
+  const tokenProps = Object.fromEntries(
+    entries.map(([key, token]) => [
+      key,
+      { get: () => ioc.resolve(token as never), enumerable: true },
+    ]),
+  )
+
+  Object.defineProperties(facade, {
+    ...tokenProps,
+    container: { value: ioc, enumerable: false },
   })
-
-  props['container'] = { value: ioc, enumerable: false }
-
-  Object.defineProperties(facade, props)
   return facade
 }
 

@@ -1,18 +1,15 @@
 import type { Request, Response, NextFunction } from 'express'
-import { isOk, pipe } from '@tecnomancy/alchemy'
+import { isOk } from '@tecnomancy/alchemy'
 import type { Result } from '@tecnomancy/alchemy'
 
 const ERROR_CODES: readonly [RegExp, number][] = [
   [/not found/i, 404],
-  [/invalid/i, 400],
   [/credentials/i, 401],
+  [/invalid/i, 400],
 ]
 
 const resolveErrorCode = (message: string) =>
-  pipe(
-    ERROR_CODES.find(([pattern]) => pattern.test(message)),
-    (match) => match?.[1] ?? 500,
-  )
+  ERROR_CODES.find(([pattern]) => pattern.test(message))?.[1] ?? 500
 
 export const resultToResponse = <T>(res: Response, result: Result<T, Error>, status = 200) =>
   isOk(result)
